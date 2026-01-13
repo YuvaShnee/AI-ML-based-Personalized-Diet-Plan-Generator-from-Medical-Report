@@ -6,6 +6,13 @@ import numpy as np
 
 # Optional imports
 try:
+    import lightgbm as lgb
+    lightgbm_available = True
+except ModuleNotFoundError:
+    lightgbm_available = False
+    st.error("LightGBM is not installed. Prediction will not work.")
+
+try:
     import shap
     shap_available = True
 except ModuleNotFoundError:
@@ -69,10 +76,17 @@ h2, h3 { color: #34495e; }
 """, unsafe_allow_html=True)
 
 # =========================================================
-# Load ML Model
+# Load ML Model (LightGBM)
 # =========================================================
-with open("best_model_LightGBM.pkl", "rb") as f:
-    model = pickle.load(f)
+if lightgbm_available:
+    try:
+        with open("best_model_LightGBM.pkl", "rb") as f:
+            model = pickle.load(f)
+    except Exception as e:
+        st.error(f"Failed to load LightGBM model: {e}")
+        model = None
+else:
+    model = None
 
 # =========================================================
 # Helper Functions
@@ -165,32 +179,36 @@ with tab1:
             st.text(text)
 
         X = np.array([extract_features(text, age, gender)])
-        prediction = model.predict(X)[0]
-        diet = generate_diet(prediction)
 
-        st.markdown("<div class='card'><h2>Generated Diet Plan</h2></div>", unsafe_allow_html=True)
-        st.metric("Predicted Condition", prediction)
-        st.metric("Diet Type", diet["diet_type"])
-        for item in diet["plan"]:
-            st.write("•", item)
+        if model is not None:
+            prediction = model.predict(X)[0]
+            diet = generate_diet(prediction)
 
-        # JSON download
-        json_data = {
-            "patient": patient_name,
-            "condition": prediction,
-            "diet_type": diet["diet_type"],
-            "diet_plan": diet["plan"]
-        }
+            st.markdown("<div class='card'><h2>Generated Diet Plan</h2></div>", unsafe_allow_html=True)
+            st.metric("Predicted Condition", prediction)
+            st.metric("Diet Type", diet["diet_type"])
+            for item in diet["plan"]:
+                st.write("•", item)
 
-        colA, colB = st.columns(2)
-        with colA:
-            st.download_button("⬇ Download JSON", json.dumps(json_data, indent=2),
-                               "diet_plan.json", "application/json")
-        with colB:
-            if fpdf_available:
-                pdf_data = generate_pdf(patient_name or "Patient", prediction, diet)
-                st.download_button("⬇ Download PDF", pdf_data,
-                                   "diet_plan.pdf", "application/pdf")
+            # JSON download
+            json_data = {
+                "patient": patient_name,
+                "condition": prediction,
+                "diet_type": diet["diet_type"],
+                "diet_plan": diet["plan"]
+            }
+
+            colA, colB = st.columns(2)
+            with colA:
+                st.download_button("⬇ Download JSON", json.dumps(json_data, indent=2),
+                                   "diet_plan.json", "application/json")
+            with colB:
+                if fpdf_available:
+                    pdf_data = generate_pdf(patient_name or "Patient", prediction, diet)
+                    st.download_button("⬇ Download PDF", pdf_data,
+                                       "diet_plan.pdf", "application/pdf")
+        else:
+            st.warning("Prediction unavailable because LightGBM is not installed.")
 
 # =========================================================
 # TAB 2: Metrics Dashboard
@@ -226,19 +244,21 @@ with tab2:
 # =========================================================
 with tab3:
     if shap_available and matplotlib_available and 'X' in locals():
-        # Optimized patient-level SHAP
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X)
-        shap_abs = np.abs(shap_values).mean(axis=0)
+        explainer = shap.TreeExplainer(model) if model is not None else None
+        if explainer is not None:
+            shap_values = explainer.shap_values(X)
+            shap_abs = np.abs(shap_values).mean(axis=0)
 
-        features = ["Text Length", "Age", "Gender"]
-        fig, ax = plt.subplots()
-        ax.barh(features, shap_abs, color="#27ae60")
-        ax.set_xlabel("Mean |SHAP value|")
-        ax.set_title("Feature Importance (Patient-level)")
-        plt.gca().invert_yaxis()  # Highest at top
+            features = ["Text Length", "Age", "Gender"]
+            fig, ax = plt.subplots()
+            ax.barh(features, shap_abs, color="#27ae60")
+            ax.set_xlabel("Mean |SHAP value|")
+            ax.set_title("Feature Importance (Patient-level)")
+            plt.gca().invert_yaxis()
+            st.pyplot(fig)
+        else:
+            st.warning("Explainable AI unavailable because LightGBM model is missing.")
 
-        st.pyplot(fig)
 
 
 
