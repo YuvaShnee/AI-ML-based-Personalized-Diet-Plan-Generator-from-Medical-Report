@@ -4,5 +4,6 @@ numpy
 scikit-learn
 lightgbm
 joblib
-reportlab
-nltk
+fpdf
+shap
+matplotlib
