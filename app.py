@@ -1,12 +1,18 @@
 import streamlit as st
 import pickle
 import json
-import shap
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from fpdf import FPDF
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# Optional SHAP
+try:
+    import shap
+    shap_available = True
+except ModuleNotFoundError:
+    shap_available = False
 
 # =========================================================
 # Page Config
@@ -52,7 +58,6 @@ h2, h3 { color: #34495e; }
 # =========================================================
 with open("best_model_LightGBM.pkl", "rb") as f:
     model = pickle.load(f)
-
 
 # =========================================================
 # Helper Functions
@@ -215,10 +220,9 @@ with tab2:
 # =========================================================
 with tab3:
     st.markdown("<div class='card'><h2>Explainable AI (SHAP)</h2></div>", unsafe_allow_html=True)
-
     st.write("Shows how features influenced the prediction.")
 
-    if 'X' in locals():
+    if shap_available and 'X' in locals():
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X)
 
@@ -230,3 +234,6 @@ with tab3:
             show=False
         )
         st.pyplot(fig)
+    else:
+        st.warning("SHAP is not installed or no data available for explainability.")
+
