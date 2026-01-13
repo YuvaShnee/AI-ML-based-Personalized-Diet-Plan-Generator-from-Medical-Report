@@ -1,5 +1,5 @@
 import streamlit as st
-import joblib
+import pickle
 import json
 import shap
 import pandas as pd
@@ -50,11 +50,9 @@ h2, h3 { color: #34495e; }
 # =========================================================
 # Load ML Model
 # =========================================================
-@st.cache_resource
-def load_model():
-    return joblib.load("best_model_LightGBM.pkl")
+with open("best_model_LightGBM.pkl", "rb") as f:
+    model = pickle.load(f)
 
-model = load_model()
 
 # =========================================================
 # Helper Functions
