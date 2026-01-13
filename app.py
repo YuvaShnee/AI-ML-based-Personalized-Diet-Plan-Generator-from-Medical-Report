@@ -3,7 +3,6 @@ import pickle
 import json
 import pandas as pd
 import numpy as np
-from fpdf import FPDF
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # Optional imports
@@ -19,6 +18,12 @@ try:
 except ModuleNotFoundError:
     matplotlib_available = False
 
+try:
+    from fpdf import FPDF
+    fpdf_available = True
+except ModuleNotFoundError:
+    fpdf_available = False
+
 # =========================================================
 # Page Config
 # =========================================================
@@ -29,7 +34,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# Custom CSS (Professional UI)
+# Custom CSS
 # =========================================================
 st.markdown("""
 <style>
@@ -102,18 +107,17 @@ def generate_diet(condition):
     })
 
 def generate_pdf(patient, condition, diet):
+    if not fpdf_available:
+        return None
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-
     pdf.cell(0, 10, f"Patient Name: {patient}", ln=True)
     pdf.cell(0, 10, f"Medical Condition: {condition}", ln=True)
     pdf.cell(0, 10, f"Diet Type: {diet['diet_type']}", ln=True)
     pdf.ln(5)
-
     for item in diet["plan"]:
         pdf.multi_cell(0, 8, f"- {item}")
-
     return pdf.output(dest="S").encode("latin-1")
 
 # =========================================================
@@ -157,17 +161,15 @@ with tab1:
 
         X = np.array([extract_features(text, age, gender)])
         prediction = model.predict(X)[0]
-
         diet = generate_diet(prediction)
 
         st.markdown("<div class='card'><h2>Generated Diet Plan</h2></div>", unsafe_allow_html=True)
         st.metric("Predicted Condition", prediction)
         st.metric("Diet Type", diet["diet_type"])
-
         for item in diet["plan"]:
             st.write("•", item)
 
-        # JSON
+        # JSON download
         json_data = {
             "patient": patient_name,
             "condition": prediction,
@@ -175,16 +177,15 @@ with tab1:
             "diet_plan": diet["plan"]
         }
 
-        # PDF
-        pdf_data = generate_pdf(patient_name or "Patient", prediction, diet)
-
         colA, colB = st.columns(2)
         with colA:
             st.download_button("⬇ Download JSON", json.dumps(json_data, indent=2),
                                "diet_plan.json", "application/json")
         with colB:
-            st.download_button("⬇ Download PDF", pdf_data,
-                               "diet_plan.pdf", "application/pdf")
+            if fpdf_available:
+                pdf_data = generate_pdf(patient_name or "Patient", prediction, diet)
+                st.download_button("⬇ Download PDF", pdf_data,
+                                   "diet_plan.pdf", "application/pdf")
 
 # =========================================================
 # TAB 2: Metrics Dashboard
@@ -200,7 +201,6 @@ with tab2:
 
     if eval_file:
         df = pd.read_csv(eval_file)
-
         y_true = df["true_label"]
         y_pred = df["predicted_label"]
 
@@ -215,22 +215,13 @@ with tab2:
         c3.metric("Recall", f"{rec*100:.2f}%")
         c4.metric("F1 Score", f"{f1*100:.2f}%")
 
-        if acc >= 0.80:
-            st.success("🎯 Milestone Achieved (≥ 80%)")
-        else:
-            st.warning("⚠️ Milestone Not Achieved")
-
 # =========================================================
 # TAB 3: Explainable AI (SHAP)
 # =========================================================
 with tab3:
-    st.markdown("<div class='card'><h2>Explainable AI (SHAP)</h2></div>", unsafe_allow_html=True)
-    st.write("Shows how features influenced the prediction.")
-
     if shap_available and matplotlib_available and 'X' in locals():
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X)
-
         fig, ax = plt.subplots()
         shap.summary_plot(
             shap_values,
@@ -239,6 +230,5 @@ with tab3:
             show=False
         )
         st.pyplot(fig)
-    else:
-        st.warning("SHAP or matplotlib is not installed or no data available for explainability.")
+
 
