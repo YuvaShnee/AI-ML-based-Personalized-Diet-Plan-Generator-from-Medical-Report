@@ -3,16 +3,21 @@ import pickle
 import json
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from fpdf import FPDF
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-# Optional SHAP
+# Optional imports
 try:
     import shap
     shap_available = True
 except ModuleNotFoundError:
     shap_available = False
+
+try:
+    import matplotlib.pyplot as plt
+    matplotlib_available = True
+except ModuleNotFoundError:
+    matplotlib_available = False
 
 # =========================================================
 # Page Config
@@ -222,7 +227,7 @@ with tab3:
     st.markdown("<div class='card'><h2>Explainable AI (SHAP)</h2></div>", unsafe_allow_html=True)
     st.write("Shows how features influenced the prediction.")
 
-    if shap_available and 'X' in locals():
+    if shap_available and matplotlib_available and 'X' in locals():
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X)
 
@@ -235,5 +240,5 @@ with tab3:
         )
         st.pyplot(fig)
     else:
-        st.warning("SHAP is not installed or no data available for explainability.")
+        st.warning("SHAP or matplotlib is not installed or no data available for explainability.")
 
