@@ -3,7 +3,6 @@ import pickle
 import json
 import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # Optional imports
 try:
@@ -23,6 +22,12 @@ try:
     fpdf_available = True
 except ModuleNotFoundError:
     fpdf_available = False
+
+try:
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+    sklearn_available = True
+except ModuleNotFoundError:
+    sklearn_available = False
 
 # =========================================================
 # Page Config
@@ -191,44 +196,49 @@ with tab1:
 # TAB 2: Metrics Dashboard
 # =========================================================
 with tab2:
-    st.markdown("<div class='card'><h2>Model Evaluation Metrics</h2></div>", unsafe_allow_html=True)
+    if sklearn_available:
+        st.markdown("<div class='card'><h2>Model Evaluation Metrics</h2></div>", unsafe_allow_html=True)
 
-    eval_file = st.file_uploader(
-        "Upload Evaluation CSV (true_label, predicted_label)",
-        type=["csv"],
-        key="metrics"
-    )
+        eval_file = st.file_uploader(
+            "Upload Evaluation CSV (true_label, predicted_label)",
+            type=["csv"],
+            key="metrics"
+        )
 
-    if eval_file:
-        df = pd.read_csv(eval_file)
-        y_true = df["true_label"]
-        y_pred = df["predicted_label"]
+        if eval_file:
+            df = pd.read_csv(eval_file)
+            y_true = df["true_label"]
+            y_pred = df["predicted_label"]
 
-        acc = accuracy_score(y_true, y_pred)
-        prec = precision_score(y_true, y_pred, average="weighted")
-        rec = recall_score(y_true, y_pred, average="weighted")
-        f1 = f1_score(y_true, y_pred, average="weighted")
+            acc = accuracy_score(y_true, y_pred)
+            prec = precision_score(y_true, y_pred, average="weighted")
+            rec = recall_score(y_true, y_pred, average="weighted")
+            f1 = f1_score(y_true, y_pred, average="weighted")
 
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Accuracy", f"{acc*100:.2f}%")
-        c2.metric("Precision", f"{prec*100:.2f}%")
-        c3.metric("Recall", f"{rec*100:.2f}%")
-        c4.metric("F1 Score", f"{f1*100:.2f}%")
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Accuracy", f"{acc*100:.2f}%")
+            c2.metric("Precision", f"{prec*100:.2f}%")
+            c3.metric("Recall", f"{rec*100:.2f}%")
+            c4.metric("F1 Score", f"{f1*100:.2f}%")
 
 # =========================================================
-# TAB 3: Explainable AI (SHAP)
+# TAB 3: Explainable AI (Optimized)
 # =========================================================
 with tab3:
     if shap_available and matplotlib_available and 'X' in locals():
+        # Optimized patient-level SHAP
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X)
+        shap_abs = np.abs(shap_values).mean(axis=0)
+
+        features = ["Text Length", "Age", "Gender"]
         fig, ax = plt.subplots()
-        shap.summary_plot(
-            shap_values,
-            X,
-            feature_names=["Text Length", "Age", "Gender"],
-            show=False
-        )
+        ax.barh(features, shap_abs, color="#27ae60")
+        ax.set_xlabel("Mean |SHAP value|")
+        ax.set_title("Feature Importance (Patient-level)")
+        plt.gca().invert_yaxis()  # Highest at top
+
         st.pyplot(fig)
+
 
 
