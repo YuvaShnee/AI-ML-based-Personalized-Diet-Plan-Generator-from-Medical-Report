@@ -1,177 +1,175 @@
 
-import streamlit as st
-import os
-import json
 
-# ===================== PAGE CONFIG =====================
+import streamlit as st
+import pandas as pd
+import os
+import re
+
+# =====================================================
+# PAGE CONFIG
+# =====================================================
 st.set_page_config(
     page_title="Diet Guidelines Using Medical Reports",
     page_icon="🥗",
     layout="wide"
 )
 
-# ===================== LOAD RULE FILE =====================
-@st.cache_data
-def load_rules():
-    if not os.path.exists("RuleBased_Diet_Plans.txt"):
-        return []
-    with open("RuleBased_Diet_Plans.txt", "r", encoding="utf-8") as f:
-        return f.readlines()
-
-diet_rules = load_rules()
-
-# ===================== HTML + CSS + JS =====================
+# =====================================================
+# GLOBAL CSS (WEBSITE STYLE)
+# =====================================================
 st.markdown("""
-<!DOCTYPE html>
-<html>
-<head>
 <style>
-body {
-    background: linear-gradient(120deg, #e3f2fd, #e8f5e9);
+.stApp {
+    background: linear-gradient(135deg, #eef2f3, #ffffff);
     font-family: 'Segoe UI', sans-serif;
 }
-
-/* Header */
-.header {
-    background: linear-gradient(90deg, #0d47a1, #1976d2);
-    padding: 30px;
-    border-radius: 18px;
+.hero {
+    background: linear-gradient(90deg, #0f4c81, #1e88e5);
     color: white;
-    text-align: center;
-    margin-bottom: 25px;
+    padding: 35px;
+    border-radius: 20px;
+    margin-bottom: 30px;
 }
-
-/* Card */
 .card {
     background: white;
-    padding: 25px;
-    border-radius: 18px;
-    box-shadow: 0px 10px 30px rgba(0,0,0,0.1);
-    margin-bottom: 25px;
+    padding: 22px;
+    border-radius: 16px;
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
 }
-
-/* Labels */
-label {
-    font-weight: 600;
+.kpi {
+    background: #f4f8ff;
+    padding: 18px;
+    border-radius: 14px;
+    text-align: center;
 }
-
-/* Buttons */
-button {
-    background: linear-gradient(90deg, #2e7d32, #66bb6a);
-    color: white;
-    border: none;
-    padding: 12px 22px;
-    font-size: 16px;
-    border-radius: 12px;
-    cursor: pointer;
-}
-
-/* Diet items */
-.diet-item {
-    background: #f1f8e9;
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-}
-
-/* Chat */
 .chat-user {
     background: #e3f2fd;
     padding: 12px;
     border-radius: 12px;
     margin-bottom: 8px;
 }
-
 .chat-ai {
     background: #e8f5e9;
     padding: 12px;
     border-radius: 12px;
     margin-bottom: 8px;
 }
-
-/* Footer */
-.footer {
-    text-align: center;
-    color: #444;
-    margin-top: 30px;
+.stButton>button {
+    background: linear-gradient(90deg,#1565c0,#42a5f5);
+    color: white;
+    height: 46px;
+    border-radius: 10px;
+    font-size: 15px;
 }
 </style>
-</head>
-</html>
 """, unsafe_allow_html=True)
 
-# ===================== HEADER =====================
+# =====================================================
+# HEADER
+# =====================================================
 st.markdown("""
-<div class="header">
+<div class="hero">
     <h1>🥗 Diet Guidelines Using Medical Reports</h1>
-    <p>Doctor-Oriented Rule-Based Nutrition Recommendation System</p>
+    <p>Doctor-oriented rule-based nutrition recommendation system</p>
 </div>
 """, unsafe_allow_html=True)
 
-# ===================== DOCTOR INPUT PANEL =====================
-st.markdown("<div class='card'><h3>👨‍⚕️ Patient Diagnosis Details</h3></div>", unsafe_allow_html=True)
+# =====================================================
+# LOAD DIET RULES
+# =====================================================
+@st.cache_data
+def load_rules():
+    rules = {}
+    with open("RuleBased_Diet_Plans.txt", "r", encoding="utf-8") as f:
+        for line in f:
+            if ":" in line:
+                k, v = line.split(":", 1)
+                rules[k.strip().lower()] = v.strip()
+    return rules
 
-c1, c2, c3 = st.columns(3)
+diet_rules = load_rules()
 
-with c1:
-    patient_name = st.text_input("Patient Name", "John Doe")
-    age = st.number_input("Age", 1, 120, 30)
+# =====================================================
+# PARSE DOCTOR NOTES
+# =====================================================
+def parse_doctor_notes(text):
+    name = re.search(r"name[:\-]\s*(.*)", text, re.I)
+    age = re.search(r"age[:\-]\s*(\d+)", text, re.I)
+    gender = re.search(r"gender[:\-]\s*(male|female)", text, re.I)
+    diagnosis = re.search(r"(diabetes|hypertension|heart disease|obesity)", text, re.I)
 
-with c2:
-    gender = st.selectbox("Gender", ["Male", "Female"])
-    diagnosis = st.selectbox(
-        "Diagnosis",
-        ["Diabetes", "Hypertension", "Heart Disease", "Obesity", "General"]
-    )
+    return {
+        "Name": name.group(1) if name else "Unknown",
+        "Age": int(age.group(1)) if age else None,
+        "Gender": gender.group(1).title() if gender else "Unknown",
+        "Diagnosis": diagnosis.group(1).title() if diagnosis else "General"
+    }
 
-with c3:
-    severity = st.selectbox(
-        "Severity Level",
-        ["Mild", "Moderate", "Severe"]
-    )
+# =====================================================
+# UPLOAD DOCTOR NOTES
+# =====================================================
+st.markdown("<div class='card'><h3>📄 Upload Doctor Notes</h3></div>", unsafe_allow_html=True)
+uploaded = st.file_uploader("Upload .txt medical report", type=["txt"])
 
-# ===================== GENERATE DIET =====================
-if st.button("🧾 Generate Diet Guidelines"):
-    st.markdown("<div class='card'><h3>🍽 Recommended Diet Guidelines</h3></div>", unsafe_allow_html=True)
+patients = []
 
-    matched = False
-    for rule in diet_rules:
-        if diagnosis.lower() in rule.lower():
-            st.markdown(f"<div class='diet-item'>✔ {rule.strip()}</div>", unsafe_allow_html=True)
-            matched = True
+if uploaded:
+    text = uploaded.read().decode("utf-8")
+    data = parse_doctor_notes(text)
+    patients.append(data)
 
-    if not matched:
-        st.markdown("<div class='diet-item'>✔ Balanced diet with fruits, vegetables, whole grains and low sugar intake.</div>", unsafe_allow_html=True)
+# =====================================================
+# PATIENT TABLE
+# =====================================================
+if patients:
+    df = pd.DataFrame(patients)
 
-# ===================== AI DIET CHAT =====================
-st.markdown("<div class='card'><h3>🤖 AI Diet Assistant (Doctor Support)</h3></div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'><h3>👥 Patient Records</h3></div>", unsafe_allow_html=True)
+    st.dataframe(df, use_container_width=True)
+
+    # =================================================
+    # DASHBOARD
+    # =================================================
+    st.markdown("<div class='card'><h3>📊 Health Dashboard</h3></div>", unsafe_allow_html=True)
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.markdown(f"<div class='kpi'><h4>Diabetes</h4><h2>{(df['Diagnosis']=='Diabetes').sum()}</h2></div>", unsafe_allow_html=True)
+    col2.markdown(f"<div class='kpi'><h4>Hypertension</h4><h2>{(df['Diagnosis']=='Hypertension').sum()}</h2></div>", unsafe_allow_html=True)
+    col3.markdown(f"<div class='kpi'><h4>Heart Disease</h4><h2>{(df['Diagnosis']=='Heart Disease').sum()}</h2></div>", unsafe_allow_html=True)
+    col4.markdown(f"<div class='kpi'><h4>Obesity</h4><h2>{(df['Diagnosis']=='Obesity').sum()}</h2></div>", unsafe_allow_html=True)
+
+    # =================================================
+    # DIET PLAN
+    # =================================================
+    st.markdown("<div class='card'><h3>🍽 Recommended Diet</h3></div>", unsafe_allow_html=True)
+    diag = df.iloc[0]["Diagnosis"].lower()
+    st.success(diet_rules.get(diag, diet_rules.get("general")))
+
+# =====================================================
+# AI CHAT (RULE + NOTES BASED)
+# =====================================================
+st.markdown("<div class='card'><h3>🤖 AI Diet Assistant</h3></div>", unsafe_allow_html=True)
 
 if "chat" not in st.session_state:
     st.session_state.chat = []
 
-question = st.text_input("Ask diet-related questions (e.g., foods to avoid, meal timing)")
+question = st.text_input("Ask about diet, food restrictions, meals, etc.")
 
-if st.button("💬 Ask AI"):
+if st.button("Ask AI"):
     if question:
         st.session_state.chat.append(("user", question))
+        answer = diet_rules.get("general")
 
-        answer = "Maintain balanced meals with fruits, vegetables and adequate hydration."
-        for rule in diet_rules:
-            if any(word in rule.lower() for word in question.lower().split()):
-                answer = rule.strip()
+        for key in diet_rules:
+            if key in question.lower():
+                answer = diet_rules[key]
                 break
 
         st.session_state.chat.append(("ai", answer))
 
-for sender, msg in st.session_state.chat:
-    if sender == "user":
-        st.markdown(f"<div class='chat-user'><b>Doctor:</b> {msg}</div>", unsafe_allow_html=True)
+for role, msg in st.session_state.chat:
+    if role == "user":
+        st.markdown(f"<div class='chat-user'><b>You:</b> {msg}</div>", unsafe_allow_html=True)
     else:
         st.markdown(f"<div class='chat-ai'><b>AI:</b> {msg}</div>", unsafe_allow_html=True)
-
-# ===================== FOOTER =====================
-st.markdown("""
-<div class="footer">
-    🏥 Clinical Decision Support System | Streamlit Cloud Deployment
-</div>
-""", unsafe_allow_html=True)
