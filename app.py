@@ -1,143 +1,122 @@
 import streamlit as st
-import pandas as pd
+import pickle
 import numpy as np
-import joblib
-from fpdf import FPDF
 import os
 
-# ------------------ PAGE CONFIG ------------------
+# =====================================================
+# PAGE CONFIG
+# =====================================================
 st.set_page_config(
-    page_title="AI Diet Plan Generator",
+    page_title="Diet Guidelines Using Medical Reports",
     page_icon="🥗",
     layout="wide"
 )
 
-# ------------------ CUSTOM CSS ------------------
+# =====================================================
+# STYLING
+# =====================================================
 st.markdown("""
 <style>
 body {
-    background-color: #f5f7fb;
-}
-.main {
-    background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 12px;
+    background-color: #f4f7fb;
 }
 h1 {
-    color: #2c7be5;
+    color: #1f4f82;
+    font-weight: 800;
+}
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 6px 15px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+.highlight {
+    background: linear-gradient(90deg,#27ae60,#2ecc71);
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 600;
 }
 .stButton>button {
-    background-color: #2c7be5;
+    background-color: #1f77d0;
     color: white;
     border-radius: 8px;
     height: 45px;
     font-size: 16px;
 }
-.card {
-    background-color: #f1f4f9;
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------ TITLE ------------------
-st.title("🥗 AI-ML Based Personalized Diet Plan Generator")
-st.caption("Upload medical values → Predict health → Generate diet plan")
+# =====================================================
+# TITLE
+# =====================================================
+st.title("🥗 Diet Guidelines Using Medical Reports")
+st.caption("AI-based Personalized Diet Recommendation System")
 
-# ------------------ LOAD MODEL SAFELY ------------------
+# =====================================================
+# LOAD MODEL (PICKLE ONLY)
+# =====================================================
 @st.cache_resource
 def load_model():
-    try:
-        return joblib.load("best_model_LightGBM.pkl")
-    except Exception as e:
-        st.error("❌ Model failed to load. Please check LightGBM compatibility.")
-        st.stop()
+    with open("best_model_LightGBM.pkl", "rb") as f:
+        return pickle.load(f)
 
 model = load_model()
 
-# ------------------ LOAD DIET RULES ------------------
+# =====================================================
+# LOAD DIET RULES
+# =====================================================
 @st.cache_data
-def load_diet_rules():
+def load_rules():
     if not os.path.exists("RuleBased_Diet_Plans.txt"):
-        return "Diet rules file not found."
+        return []
     with open("RuleBased_Diet_Plans.txt", "r", encoding="utf-8") as f:
-        return f.read()
+        return f.readlines()
 
-diet_rules = load_diet_rules()
+diet_rules = load_rules()
 
-# ------------------ USER INPUT ------------------
-st.subheader("🧪 Enter Medical Parameters")
+# =====================================================
+# INPUT SECTION
+# =====================================================
+st.markdown("<div class='card'><h3>🧪 Patient Medical Inputs</h3></div>", unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
-with col1:
+with c1:
     age = st.number_input("Age", 1, 120, 30)
     bmi = st.number_input("BMI", 10.0, 60.0, 22.0)
 
-with col2:
+with c2:
     glucose = st.number_input("Glucose Level", 50, 300, 110)
     bp = st.number_input("Blood Pressure", 50, 200, 80)
 
-with col3:
+with c3:
     cholesterol = st.number_input("Cholesterol", 100, 400, 180)
     insulin = st.number_input("Insulin", 0, 300, 80)
 
-# ------------------ PREDICTION ------------------
-if st.button("🔍 Generate Diet Plan"):
-    input_data = np.array([[age, bmi, glucose, bp, cholesterol, insulin]])
+# =====================================================
+# PREDICTION
+# =====================================================
+if st.button("🔍 Generate Diet Guidelines"):
+    X = np.array([[age, bmi, glucose, bp, cholesterol, insulin]])
 
-    try:
-        prediction = model.predict(input_data)[0]
-    except Exception as e:
-        st.error("❌ Prediction failed due to model mismatch.")
-        st.stop()
+    prediction = model.predict(X)[0]
 
-    st.success(f"✅ Health Category Predicted: **{prediction}**")
+    st.markdown("<div class='highlight'>Prediction Completed Successfully</div><br>", unsafe_allow_html=True)
 
-    # ------------------ DIET MATCHING ------------------
-    st.subheader("🍽 Personalized Diet Recommendation")
+    st.metric("Predicted Health Condition", prediction)
 
-    matched_plan = []
-    for line in diet_rules.split("\n"):
-        if prediction.lower() in line.lower():
-            matched_plan.append(line)
+    # =================================================
+    # MATCH DIET RULES
+    # =================================================
+    st.markdown("<div class='card'><h3>🍽 Recommended Diet Plan</h3></div>", unsafe_allow_html=True)
 
-    if matched_plan:
-        for item in matched_plan:
-            st.markdown(f"<div class='card'>🥗 {item}</div>", unsafe_allow_html=True)
-    else:
-        st.info("No specific diet found. Showing general healthy diet.")
-        st.markdown(f"<div class='card'>{diet_rules}</div>", unsafe_allow_html=True)
+    matched = False
+    for rule in diet_rules:
+        if str(prediction).lower() in rule.lower():
+            st.write("✔️", rule.strip())
+            matched = True
 
-    # ------------------ PDF EXPORT ------------------
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    pdf.cell(200, 10, "Personalized Diet Plan", ln=True)
-    pdf.cell(200, 10, f"Health Category: {prediction}", ln=True)
-
-    for item in matched_plan:
-        pdf.multi_cell(0, 8, item)
-
-    pdf_path = "Diet_Plan.pdf"
-    pdf.output(pdf_path)
-
-    with open(pdf_path, "rb") as f:
-        st.download_button(
-            label="📄 Download Diet Plan (PDF)",
-            data=f,
-            file_name="Personalized_Diet_Plan.pdf",
-            mime="application/pdf"
-        )
-
-# ------------------ FOOTER ------------------
-st.markdown("---")
-st.caption("🚀 Built with Streamlit Cloud | AI-ML Diet Recommendation System")
-
-
-
-
-
+    if not matched:
+        st.write("✔️ Follow a balanced diet with fruits, vegetables, and low sugar intake.")
