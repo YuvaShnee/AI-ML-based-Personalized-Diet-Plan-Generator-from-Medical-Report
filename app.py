@@ -1,263 +1,142 @@
 import streamlit as st
-import pickle
-import json
 import pandas as pd
 import numpy as np
+import joblib
+from fpdf import FPDF
+import os
 
-# Optional imports
-try:
-    import lightgbm as lgb
-    lightgbm_available = True
-except ModuleNotFoundError:
-    lightgbm_available = False
-    st.error("LightGBM is not installed. Prediction will not work.")
-
-try:
-    import shap
-    shap_available = True
-except ModuleNotFoundError:
-    shap_available = False
-
-try:
-    import matplotlib.pyplot as plt
-    matplotlib_available = True
-except ModuleNotFoundError:
-    matplotlib_available = False
-
-try:
-    from fpdf import FPDF
-    fpdf_available = True
-except ModuleNotFoundError:
-    fpdf_available = False
-
-try:
-    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-    sklearn_available = True
-except ModuleNotFoundError:
-    sklearn_available = False
-
-# =========================================================
-# Page Config
-# =========================================================
+# ------------------ PAGE CONFIG ------------------
 st.set_page_config(
-    page_title="AI Diet Recommendation System",
+    page_title="AI Diet Plan Generator",
     page_icon="🥗",
     layout="wide"
 )
 
-# =========================================================
-# Custom CSS
-# =========================================================
+# ------------------ CUSTOM CSS ------------------
 st.markdown("""
 <style>
-body { background-color: #f6f8fb; }
-h1 { color: #2c3e50; font-weight: 700; }
-h2, h3 { color: #34495e; }
-.card {
-    background-color: white;
-    padding: 20px;
+body {
+    background-color: #f5f7fb;
+}
+.main {
+    background-color: #ffffff;
+    padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
+}
+h1 {
+    color: #2c7be5;
 }
 .stButton>button {
-    background-color: #27ae60;
+    background-color: #2c7be5;
     color: white;
+    border-radius: 8px;
+    height: 45px;
     font-size: 16px;
-    border-radius: 8px;
-    height: 3em;
 }
-.stDownloadButton>button {
-    background-color: #2980b9;
-    color: white;
-    border-radius: 8px;
+.card {
+    background-color: #f1f4f9;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
-# Load ML Model (LightGBM)
-# =========================================================
-if lightgbm_available:
+# ------------------ TITLE ------------------
+st.title("🥗 AI-ML Based Personalized Diet Plan Generator")
+st.caption("Upload medical values → Predict health → Generate diet plan")
+
+# ------------------ LOAD MODEL SAFELY ------------------
+@st.cache_resource
+def load_model():
     try:
-        with open("best_model_LightGBM.pkl", "rb") as f:
-            model = pickle.load(f)
+        return joblib.load("best_model_LightGBM.pkl")
     except Exception as e:
-        st.error(f"Failed to load LightGBM model: {e}")
-        model = None
-else:
-    model = None
+        st.error("❌ Model failed to load. Please check LightGBM compatibility.")
+        st.stop()
 
-# =========================================================
-# Helper Functions
-# =========================================================
-def extract_features(text, age, gender):
-    gender_val = 1 if gender == "Male" else 0
-    return [len(text), age, gender_val]
+model = load_model()
 
-def generate_diet(condition):
-    plans = {
-        "diabetes": {
-            "diet_type": "Diabetic Diet",
-            "plan": [
-                "Breakfast: Oatmeal with skim milk",
-                "Lunch: Quinoa salad with legumes",
-                "Snack: Apple slices, almonds",
-                "Dinner: Steamed fish and vegetables"
-            ]
-        },
-        "hypertension": {
-            "diet_type": "Low Sodium Diet",
-            "plan": [
-                "Breakfast: Fruits with oats",
-                "Lunch: Brown rice with vegetables",
-                "Snack: Unsalted nuts",
-                "Dinner: Grilled chicken salad"
-            ]
-        }
-    }
-    return plans.get(condition, {
-        "diet_type": "Balanced Diet",
-        "plan": [
-            "Breakfast: Fruits and nuts",
-            "Lunch: Home-cooked vegetables",
-            "Dinner: Light meal"
-        ]
-    })
+# ------------------ LOAD DIET RULES ------------------
+@st.cache_data
+def load_diet_rules():
+    if not os.path.exists("RuleBased_Diet_Plans.txt"):
+        return "Diet rules file not found."
+    with open("RuleBased_Diet_Plans.txt", "r", encoding="utf-8") as f:
+        return f.read()
 
-def generate_pdf(patient, condition, diet):
-    if not fpdf_available:
-        return None
+diet_rules = load_diet_rules()
+
+# ------------------ USER INPUT ------------------
+st.subheader("🧪 Enter Medical Parameters")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    age = st.number_input("Age", 1, 120, 30)
+    bmi = st.number_input("BMI", 10.0, 60.0, 22.0)
+
+with col2:
+    glucose = st.number_input("Glucose Level", 50, 300, 110)
+    bp = st.number_input("Blood Pressure", 50, 200, 80)
+
+with col3:
+    cholesterol = st.number_input("Cholesterol", 100, 400, 180)
+    insulin = st.number_input("Insulin", 0, 300, 80)
+
+# ------------------ PREDICTION ------------------
+if st.button("🔍 Generate Diet Plan"):
+    input_data = np.array([[age, bmi, glucose, bp, cholesterol, insulin]])
+
+    try:
+        prediction = model.predict(input_data)[0]
+    except Exception as e:
+        st.error("❌ Prediction failed due to model mismatch.")
+        st.stop()
+
+    st.success(f"✅ Health Category Predicted: **{prediction}**")
+
+    # ------------------ DIET MATCHING ------------------
+    st.subheader("🍽 Personalized Diet Recommendation")
+
+    matched_plan = []
+    for line in diet_rules.split("\n"):
+        if prediction.lower() in line.lower():
+            matched_plan.append(line)
+
+    if matched_plan:
+        for item in matched_plan:
+            st.markdown(f"<div class='card'>🥗 {item}</div>", unsafe_allow_html=True)
+    else:
+        st.info("No specific diet found. Showing general healthy diet.")
+        st.markdown(f"<div class='card'>{diet_rules}</div>", unsafe_allow_html=True)
+
+    # ------------------ PDF EXPORT ------------------
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, f"Patient Name: {patient}", ln=True)
-    pdf.cell(0, 10, f"Medical Condition: {condition}", ln=True)
-    pdf.cell(0, 10, f"Diet Type: {diet['diet_type']}", ln=True)
-    pdf.ln(5)
-    for item in diet["plan"]:
-        pdf.multi_cell(0, 8, f"- {item}")
-    return pdf.output(dest="S").encode("latin-1")
 
-# =========================================================
-# Sidebar
-# =========================================================
-st.sidebar.title("🥗 AI Diet System")
-st.sidebar.info("""
-• ML-based prediction  
-• Actionable diet plans  
-• PDF & JSON export  
-• Metrics dashboard  
-• Explainable AI  
-""")
+    pdf.cell(200, 10, "Personalized Diet Plan", ln=True)
+    pdf.cell(200, 10, f"Health Category: {prediction}", ln=True)
 
-# =========================================================
-# Tabs
-# =========================================================
-tab1, tab2, tab3 = st.tabs(["🧠 Prediction", "📊 Metrics", "🔍 Explainable AI"])
+    for item in matched_plan:
+        pdf.multi_cell(0, 8, item)
 
-# =========================================================
-# TAB 1: Prediction
-# =========================================================
-with tab1:
-    st.markdown("<div class='card'><h2>Patient Input</h2></div>", unsafe_allow_html=True)
+    pdf_path = "Diet_Plan.pdf"
+    pdf.output(pdf_path)
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        patient_name = st.text_input("Patient Name")
-    with col2:
-        age = st.number_input("Age", 1, 100, 30)
-    with col3:
-        gender = st.selectbox("Gender", ["Male", "Female"])
-
-    uploaded_file = st.file_uploader("Upload Doctor Notes (TXT)", type=["txt"])
-
-    if uploaded_file:
-        text = uploaded_file.read().decode("utf-8")
-
-        with st.expander("View Uploaded Text"):
-            st.text(text)
-
-        X = np.array([extract_features(text, age, gender)])
-
-        if model is not None:
-            prediction = model.predict(X)[0]
-            diet = generate_diet(prediction)
-
-            st.markdown("<div class='card'><h2>Generated Diet Plan</h2></div>", unsafe_allow_html=True)
-            st.metric("Predicted Condition", prediction)
-            st.metric("Diet Type", diet["diet_type"])
-            for item in diet["plan"]:
-                st.write("•", item)
-
-            # JSON download
-            json_data = {
-                "patient": patient_name,
-                "condition": prediction,
-                "diet_type": diet["diet_type"],
-                "diet_plan": diet["plan"]
-            }
-
-            colA, colB = st.columns(2)
-            with colA:
-                st.download_button("⬇ Download JSON", json.dumps(json_data, indent=2),
-                                   "diet_plan.json", "application/json")
-            with colB:
-                if fpdf_available:
-                    pdf_data = generate_pdf(patient_name or "Patient", prediction, diet)
-                    st.download_button("⬇ Download PDF", pdf_data,
-                                       "diet_plan.pdf", "application/pdf")
-        else:
-            st.warning("Prediction unavailable because LightGBM is not installed.")
-
-# =========================================================
-# TAB 2: Metrics Dashboard
-# =========================================================
-with tab2:
-    if sklearn_available:
-        st.markdown("<div class='card'><h2>Model Evaluation Metrics</h2></div>", unsafe_allow_html=True)
-
-        eval_file = st.file_uploader(
-            "Upload Evaluation CSV (true_label, predicted_label)",
-            type=["csv"],
-            key="metrics"
+    with open(pdf_path, "rb") as f:
+        st.download_button(
+            label="📄 Download Diet Plan (PDF)",
+            data=f,
+            file_name="Personalized_Diet_Plan.pdf",
+            mime="application/pdf"
         )
 
-        if eval_file:
-            df = pd.read_csv(eval_file)
-            y_true = df["true_label"]
-            y_pred = df["predicted_label"]
+# ------------------ FOOTER ------------------
+st.markdown("---")
+st.caption("🚀 Built with Streamlit Cloud | AI-ML Diet Recommendation System")
 
-            acc = accuracy_score(y_true, y_pred)
-            prec = precision_score(y_true, y_pred, average="weighted")
-            rec = recall_score(y_true, y_pred, average="weighted")
-            f1 = f1_score(y_true, y_pred, average="weighted")
-
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Accuracy", f"{acc*100:.2f}%")
-            c2.metric("Precision", f"{prec*100:.2f}%")
-            c3.metric("Recall", f"{rec*100:.2f}%")
-            c4.metric("F1 Score", f"{f1*100:.2f}%")
-
-# =========================================================
-# TAB 3: Explainable AI (Optimized)
-# =========================================================
-with tab3:
-    if shap_available and matplotlib_available and 'X' in locals():
-        explainer = shap.TreeExplainer(model) if model is not None else None
-        if explainer is not None:
-            shap_values = explainer.shap_values(X)
-            shap_abs = np.abs(shap_values).mean(axis=0)
-
-            features = ["Text Length", "Age", "Gender"]
-            fig, ax = plt.subplots()
-            ax.barh(features, shap_abs, color="#27ae60")
-            ax.set_xlabel("Mean |SHAP value|")
-            ax.set_title("Feature Importance (Patient-level)")
-            plt.gca().invert_yaxis()
-            st.pyplot(fig)
-        else:
-            st.warning("Explainable AI unavailable because LightGBM model is missing.")
 
 
 
