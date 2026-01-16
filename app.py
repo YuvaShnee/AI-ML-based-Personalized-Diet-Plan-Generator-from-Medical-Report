@@ -3,6 +3,8 @@ import pandas as pd
 import joblib
 import json
 import lightgbm
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 # ==================================================
 # STREAMLIT CONFIG
@@ -19,11 +21,7 @@ TRAIN_PATH = "diet_app/train_data.csv"
 INFER_PATH = "diet_app/final_unique_range_valid_medical_data.csv"
 DIET_PATH = "diets/Actionable_Diet_Guidelines_from_TXT.json"
 
-# ==================================================
-# CONSTANTS FROM TRAINING SCRIPT
-# ==================================================
 TARGET_COLUMN = "binary_diet"
-
 LEAKAGE_COLUMNS = [
     "blood_sugar",
     "cholesterol",
@@ -74,12 +72,17 @@ if st.button("🔍 Generate Diet Plan"):
     X = prepare_features(infer_df, FEATURE_COLUMNS)
     preds = model.predict(X)
 
+    diet_keys = list(diet_data.keys())
+    if len(diet_keys) != 2:
+        st.error("⚠ Diet JSON keys not compatible with predictions")
+        st.stop()
+
     for i, pred in enumerate(preds):
 
         risk_label = "HIGH DIET RISK" if pred == 1 else "LOW DIET RISK"
 
-        # Binary diet mapping
-        diet_key = "diabetes" if pred == 1 else "vitamin deficiency"
+        # Map prediction to JSON key dynamically
+        diet_key = diet_keys[0] if pred == 1 else diet_keys[1]
         diet_plan = diet_data[diet_key]
 
         st.divider()
@@ -106,6 +109,36 @@ if st.button("🔍 Generate Diet Plan"):
             mime="application/json",
             key=f"json_{i}"
         )
+
+        # ---------------- PDF EXPORT ----------------
+        def generate_pdf(condition, diet_plan, pid):
+            file_name = f"patient_{pid}_{condition}_diet.pdf"
+            doc = SimpleDocTemplate(file_name)
+            styles = getSampleStyleSheet()
+            content = []
+
+            content.append(
+                Paragraph(f"<b>Diet Plan for {condition}</b>", styles["Title"])
+            )
+
+            for day, meals in diet_plan.items():
+                content.append(Paragraph(f"<b>{day}</b>", styles["Heading2"]))
+                for meal, value in meals.items():
+                    content.append(Paragraph(f"{meal}: {value}", styles["Normal"]))
+
+            doc.build(content)
+            return file_name
+
+        pdf_file = generate_pdf(risk_label, diet_plan, i + 1)
+
+        with open(pdf_file, "rb") as f:
+            st.download_button(
+                "⬇️ Download PDF",
+                f,
+                file_name=pdf_file,
+                key=f"pdf_{i}"
+            )
+
 
 
 
