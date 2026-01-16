@@ -17,3 +17,11 @@ lightgbm
 scikit-learn
 xgboost
 reportlab
+streamlit
+pandas
+joblib
+lightgbm
+scikit-learn
+xgboost
+plotly
+reportlab
