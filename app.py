@@ -8,7 +8,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 # ================= STREAMLIT CONFIG =================
 st.set_page_config(page_title="AI Diet Planner", layout="centered")
-st.title("🥗 AI-ML Based Personalized Diet Plan Generator")
+st.title("🥗 AI-ML Personalized Diet Plan Generator")
 st.caption("LightGBM • Feature-Leakage Safe • Cloud Ready")
 
 # ================= PATHS =================
@@ -44,10 +44,7 @@ with open(DIET_PATH) as f:
 # If JSON is a list, convert to dict with keys "high_risk" and "low_risk"
 if isinstance(diet_data, list):
     if len(diet_data) >= 2:
-        diet_data = {
-            "high_risk": diet_data[0],
-            "low_risk": diet_data[1]
-        }
+        diet_data = {"high_risk": diet_data[0], "low_risk": diet_data[1]}
     else:
         st.error("Diet JSON list must have at least 2 items.")
         st.stop()
@@ -78,8 +75,6 @@ if st.button("🔍 Generate Diet Plan"):
     for i, pred in enumerate(preds):
 
         risk_label = "HIGH DIET RISK" if pred == 1 else "LOW DIET RISK"
-
-        # Map prediction to diet key
         diet_key = diet_keys[0] if pred == 1 else diet_keys[1]
         diet_plan = diet_data[diet_key]
 
@@ -87,11 +82,17 @@ if st.button("🔍 Generate Diet Plan"):
         st.subheader(f"🧑 Patient {i+1}")
         st.write(f"**Diet Risk Classification:** {risk_label}")
 
-        # Display diet plan
+        # ================= DISPLAY DIET PLAN =================
         for day, meals in diet_plan.items():
             st.markdown(f"### {day}")
-            for meal, value in meals.items():
-                st.write(f"**{meal}:** {value}")
+            if isinstance(meals, dict):
+                for meal, value in meals.items():
+                    st.write(f"**{meal}:** {value}")
+            elif isinstance(meals, list):
+                for item in meals:
+                    st.write(f"- {item}")
+            else:
+                st.write(meals)
 
         # ================= JSON EXPORT =================
         output = {
@@ -122,8 +123,14 @@ if st.button("🔍 Generate Diet Plan"):
 
             for day, meals in diet_plan.items():
                 content.append(Paragraph(f"<b>{day}</b>", styles["Heading2"]))
-                for meal, value in meals.items():
-                    content.append(Paragraph(f"{meal}: {value}", styles["Normal"]))
+                if isinstance(meals, dict):
+                    for meal, value in meals.items():
+                        content.append(Paragraph(f"{meal}: {value}", styles["Normal"]))
+                elif isinstance(meals, list):
+                    for item in meals:
+                        content.append(Paragraph(f"- {item}", styles["Normal"]))
+                else:
+                    content.append(Paragraph(str(meals), styles["Normal"]))
 
             doc.build(content)
             return file_name
@@ -137,3 +144,4 @@ if st.button("🔍 Generate Diet Plan"):
                 file_name=pdf_file,
                 key=f"pdf_{i}"
             )
+
