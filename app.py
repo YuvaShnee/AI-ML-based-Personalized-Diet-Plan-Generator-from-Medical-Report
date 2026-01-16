@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 import json
-import lightgbm  # REQUIRED for loading LightGBM pickle
+import lightgbm  # required for loading LightGBM pickle
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
@@ -15,10 +15,10 @@ st.set_page_config(
 )
 
 st.title("🥗 AI-ML Based Personalized Diet Plan Generator")
-st.caption("LightGBM Model + Rule-Based AI | Streamlit Cloud Deployment")
+st.caption("LightGBM Model + Rule-Based AI | Streamlit Cloud")
 
 # ==================================================
-# LOAD ML MODEL
+# LOAD MODEL
 # ==================================================
 MODEL_PATH = "diet_app/best_model_LightGBM.pkl"
 model = joblib.load(MODEL_PATH)
@@ -26,12 +26,12 @@ model = joblib.load(MODEL_PATH)
 # ==================================================
 # LOAD DIET GUIDELINES (JSON)
 # ==================================================
-DIET_JSON_PATH = "diet_app/diets/Actionable_Diet_Guidelines_from_TXT.json"
+DIET_JSON_PATH = "diets/Actionable_Diet_Guidelines_from_TXT.json"
 with open(DIET_JSON_PATH, "r") as f:
     diet_data = json.load(f)
 
 # ==================================================
-# LABEL MAPPING (MATCH TRAINING)
+# LABEL MAPPING
 # ==================================================
 label_map = {
     0: "diabetes",
@@ -41,7 +41,7 @@ label_map = {
 }
 
 # ==================================================
-# AUTO LOAD MEDICAL CSV
+# LOAD MEDICAL CSV (AUTO)
 # ==================================================
 CSV_PATH = "diet_app/final_unique_range_valid_medical_data.csv"
 df = pd.read_csv(CSV_PATH)
@@ -50,7 +50,7 @@ st.subheader("📂 Sample Medical Report (Auto Loaded)")
 st.dataframe(df)
 
 # ==================================================
-# PREDICTION + DIET GENERATION
+# GENERATE DIET PLAN
 # ==================================================
 if st.button("🔍 Generate Diet Plan"):
 
@@ -78,8 +78,8 @@ if st.button("🔍 Generate Diet Plan"):
         }
 
         st.download_button(
-            label="⬇️ Download Diet Plan (JSON)",
-            data=json.dumps(result_json, indent=4),
+            "⬇️ Download Diet Plan (JSON)",
+            json.dumps(result_json, indent=4),
             file_name=f"patient_{i + 1}_diet.json",
             mime="application/json",
             key=f"json_{i}"
@@ -97,13 +97,9 @@ if st.button("🔍 Generate Diet Plan"):
             )
 
             for day, meals in diet_plan.items():
-                content.append(
-                    Paragraph(f"<b>{day}</b>", styles["Heading2"])
-                )
+                content.append(Paragraph(f"<b>{day}</b>", styles["Heading2"]))
                 for meal, value in meals.items():
-                    content.append(
-                        Paragraph(f"{meal}: {value}", styles["Normal"])
-                    )
+                    content.append(Paragraph(f"{meal}: {value}", styles["Normal"]))
 
             doc.build(content)
             return file_name
@@ -112,10 +108,11 @@ if st.button("🔍 Generate Diet Plan"):
 
         with open(pdf_file, "rb") as f:
             st.download_button(
-                label="⬇️ Download Diet Plan (PDF)",
-                data=f,
+                "⬇️ Download Diet Plan (PDF)",
+                f,
                 file_name=pdf_file,
                 key=f"pdf_{i}"
             )
+
 
 
