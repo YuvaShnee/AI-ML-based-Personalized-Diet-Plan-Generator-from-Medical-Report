@@ -46,10 +46,14 @@ X_train = train_df.drop(columns=LEAKAGE_COLUMNS + [TARGET_COLUMN], errors="ignor
 FEATURE_COLUMNS = X_train.columns.tolist()
 
 # ==================================================
-# LOAD DIET RULES
+# LOAD DIET RULES (HANDLE BOTH DICT OR LIST)
 # ==================================================
 with open(DIET_PATH) as f:
     diet_data = json.load(f)
+
+if isinstance(diet_data, list):
+    # Convert list to dict keyed by "condition"
+    diet_data = {item["condition"]: item for item in diet_data}
 
 # ==================================================
 # LOAD INFERENCE DATA
@@ -59,7 +63,7 @@ st.subheader("📂 Medical Report Data")
 st.dataframe(infer_df)
 
 # ==================================================
-# FEATURE ALIGNMENT
+# FEATURE ALIGNMENT FUNCTION
 # ==================================================
 def prepare_features(df, feature_columns):
     return df.reindex(columns=feature_columns, fill_value=0)
@@ -138,6 +142,7 @@ if st.button("🔍 Generate Diet Plan"):
                 file_name=pdf_file,
                 key=f"pdf_{i}"
             )
+
 
 
 
