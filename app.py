@@ -650,4 +650,4 @@ st.markdown("""
 <div style="text-align: center; padding: 30px; background: rgba(255, 255, 255, 0.8); border-radius: 15px; margin-top: 30px;">
     <h3 style="color: #4a90e2; margin-bottom: 15px;"> AI Diet Planner</h3> <p style="color: #666; font-size: 16px; margin-bottom: 10px;"> © 2025 AI Diet Planner | Powered by Machine Learning | Built with using Streamlit </p> <p style="color: #999; font-size: 14px;"> Version 3.0 | Last Updated: January 2025 | Accuracy: 98.5% </p> <div style="margin-top: 20px;"> <span style="color: #4a90e2; margin: 0 10px;"> support@aidietplanner.com</span> <span style="color: #7b68ee; margin: 0 10px;"> www.aidietplanner.com</span> </div>
 
-</div> """, unsafe_allow_html=True)```
+</div> """, unsafe_allow_html=True)``
