@@ -177,7 +177,7 @@ MODEL_PATH = "diet_app/best_model_LightGBM.pkl"
 TRAIN_PATH = "diet_app/train_data.csv"
 INFER_PATH = "diet_app/final_unique_range_valid_medical_data.csv"
 DIET_PATH = "diets/Actionable_Diet_Guidelines_from_TXT.json"
-DIET_GUIDELINES_DIR = "rulebased_diet_plan"
+DIET_GUIDELINES_DIR = "rulebased_diet_plan_txt"
 
 TARGET_COLUMN = "binary_diet"
 LEAKAGE_COLUMNS = [
@@ -497,16 +497,13 @@ elif page == "📊 Dashboard":
         )])
         
         fig_pie.update_layout(
-            title={
-                'text': "<b>Risk Distribution Overview</b>",
-                'x': 0.5,
-                'xanchor': 'center',
-                'font': {'size': 20, 'color': '#333'}
-            },
+            title_text="<b>Risk Distribution Overview</b>",
+            title_x=0.5,
+            title_font=dict(size=20, color='#333'),
             showlegend=True,
             paper_bgcolor='rgba(255,255,255,0.95)',
             plot_bgcolor='rgba(255,255,255,0.95)',
-            font={'color': '#333', 'size': 14},
+            font=dict(color='#333', size=14),
             height=400
         )
         
@@ -517,11 +514,10 @@ elif page == "📊 Dashboard":
             go.Bar(
                 x=risk_counts["Risk Level"],
                 y=risk_counts["Patient Count"],
-                marker={
-                    'color': ['#ff6b6b', '#51cf66'],
-                    'line': {'color': 'white', 'width': 2},
-                    'opacity': 0.85
-                },
+                marker_color=['#ff6b6b', '#51cf66'],
+                marker_line_color='white',
+                marker_line_width=2,
+                marker_opacity=0.85,
                 text=risk_counts["Patient Count"],
                 textposition='outside',
                 textfont={'size': 16, 'color': '#333'},
@@ -530,25 +526,18 @@ elif page == "📊 Dashboard":
         ])
         
         fig_bar.update_layout(
-            title={
-                'text': "<b>Patient Risk Comparison</b>",
-                'x': 0.5,
-                'xanchor': 'center',
-                'font': {'size': 20, 'color': '#333'}
-            },
-            xaxis={
-                'title': "Risk Level",
-                'titlefont': {'size': 16, 'color': '#333'},
-                'tickfont': {'size': 14, 'color': '#333'}
-            },
-            yaxis={
-                'title': "Number of Patients",
-                'titlefont': {'size': 16, 'color': '#333'},
-                'tickfont': {'size': 14, 'color': '#333'}
-            },
+            title_text="<b>Patient Risk Comparison</b>",
+            title_x=0.5,
+            title_font=dict(size=20, color='#333'),
+            xaxis_title="Risk Level",
+            xaxis_titlefont=dict(size=16, color='#333'),
+            xaxis_tickfont=dict(size=14, color='#333'),
+            yaxis_title="Number of Patients",
+            yaxis_titlefont=dict(size=16, color='#333'),
+            yaxis_tickfont=dict(size=14, color='#333'),
             paper_bgcolor='rgba(255,255,255,0.95)',
             plot_bgcolor='rgba(255,255,255,0.95)',
-            font={'color': '#333', 'size': 14},
+            font=dict(color='#333', size=14),
             height=400
         )
         
