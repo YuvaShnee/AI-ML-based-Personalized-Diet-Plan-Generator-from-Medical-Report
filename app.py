@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 import joblib
 import json
-import os
+import lightgbm
+import plotly.express as px
 import plotly.graph_objects as go
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
-import time
 
 # ================= STREAMLIT CONFIG =================
 st.set_page_config(
@@ -18,157 +20,131 @@ st.set_page_config(
 # ================= CUSTOM CSS =================
 st.markdown("""
 <style>
+    /* Main background gradient */
     .stApp {
-        background: linear-gradient(135deg, #f0f4ff 0%, #fef5ff 50%, #fff9f0 100%);
-        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
+    
+    /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-        border-right: 2px solid #e8efff;
+        background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
     }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-        color: #4a90e2 !important;
+    
+    [data-testid="stSidebar"] .css-1d391kg {
+        color: white;
     }
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
-        color: #333 !important;
-    }
+    
+    /* Card styling */
     .metric-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-        padding: 30px 25px;
-        border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(74, 144, 226, 0.12);
-        border: 1px solid rgba(74, 144, 226, 0.1);
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         text-align: center;
-        transition: all 0.3s ease;
-        margin-bottom: 20px;
+        transition: transform 0.3s ease;
     }
+    
     .metric-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(74, 144, 226, 0.2);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
     }
-    .metric-card h3 {
-        color: #4a90e2;
-        font-size: 2.5em;
-        margin: 10px 0;
-        font-weight: 700;
-    }
-    .metric-card p {
-        color: #666;
-        font-size: 1em;
-        margin: 5px 0;
-        font-weight: 500;
-    }
-    .metric-card .delta {
-        color: #51cf66;
-        font-size: 0.9em;
-        font-weight: 600;
-        margin-top: 5px;
-    }
+    
+    /* Header styling */
     .main-header {
-        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
-        padding: 50px 40px;
-        border-radius: 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 20px;
         color: white;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 10px 40px rgba(74, 144, 226, 0.25);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
+    
     .section-header {
-        background: linear-gradient(90deg, #4a90e2 0%, #7b68ee 100%);
-        padding: 20px 30px;
-        border-radius: 15px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        padding: 15px 25px;
+        border-radius: 10px;
         color: white;
-        margin: 25px 0;
-        font-weight: 600;
-        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
-        font-size: 1.3em;
+        margin: 20px 0;
+        font-weight: bold;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
+    
+    /* Button styling */
     .stButton>button {
-        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        padding: 16px 40px;
-        border-radius: 30px;
-        font-weight: 600;
-        font-size: 16px;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: bold;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-        width: 100%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
+    
     .stButton>button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
-        background: linear-gradient(135deg, #357abd 0%, #6a5acd 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     }
+    
+    /* Risk badge styling */
     .risk-badge-high {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
-        padding: 10px 25px;
-        border-radius: 25px;
-        font-weight: 600;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: bold;
         display: inline-block;
-        box-shadow: 0 3px 12px rgba(255, 107, 107, 0.3);
-        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
+    
     .risk-badge-low {
-        background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         color: white;
-        padding: 10px 25px;
-        border-radius: 25px;
-        font-weight: 600;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: bold;
         display: inline-block;
-        box-shadow: 0 3px 12px rgba(81, 207, 102, 0.3);
-        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
+    
+    /* Content container */
     .content-container {
         background: white;
         padding: 30px;
-        border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-        border: 1px solid rgba(74, 144, 226, 0.1);
-        margin: 20px 0;
-    }
-    .diet-card {
-        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-        color: #333;
-        padding: 25px;
-        border-radius: 20px;
-        margin: 20px 0;
-        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.15);
-        border: 1px solid rgba(255, 152, 0, 0.2);
-    }
-    .feature-card {
-        background: white;
-        padding: 35px 30px;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 4px 20px rgba(74, 144, 226, 0.1);
-        border: 1px solid rgba(74, 144, 226, 0.08);
-        transition: all 0.3s ease;
-        height: 100%;
-    }
-    .feature-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 8px 30px rgba(74, 144, 226, 0.18);
-    }
-    .dataframe {
         border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
     }
-    .streamlit-expanderHeader {
-        background: rgba(74, 144, 226, 0.08);
+    
+    /* Diet plan card */
+    .diet-card {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        padding: 20px;
+        border-radius: 15px;
+        margin: 15px 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* KPI metric styling */
+    [data-testid="stMetricValue"] {
+        font-size: 32px;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    /* Radio button styling */
+    .stRadio > label {
+        color: white !important;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    /* Dataframe styling */
+    .dataframe {
         border-radius: 10px;
-        color: #4a90e2;
-        font-weight: 600;
+        overflow: hidden;
     }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -177,7 +153,6 @@ MODEL_PATH = "diet_app/best_model_LightGBM.pkl"
 TRAIN_PATH = "diet_app/train_data.csv"
 INFER_PATH = "diet_app/final_unique_range_valid_medical_data.csv"
 DIET_PATH = "diets/Actionable_Diet_Guidelines_from_TXT.json"
-DIET_GUIDELINES_DIR = "rulebased_diet_plan_txt"
 
 TARGET_COLUMN = "binary_diet"
 LEAKAGE_COLUMNS = [
@@ -186,498 +161,325 @@ LEAKAGE_COLUMNS = [
     "liver_risk_score"
 ]
 
-# ================= OPTIMIZED DATA LOADING =================
-@st.cache_resource(show_spinner=False)
+# ================= LOAD MODEL =================
+@st.cache_resource
 def load_model_and_data():
-    try:
-        with st.spinner("🚀 Loading AI models and patient data..."):
-            model = joblib.load(MODEL_PATH)
-            train_df = pd.read_csv(TRAIN_PATH)
-            X_train = train_df.drop(columns=LEAKAGE_COLUMNS + [TARGET_COLUMN], errors="ignore")
-            feature_columns = X_train.columns.tolist()
-            infer_df = pd.read_csv(INFER_PATH)
-            
-            with open(DIET_PATH) as f:
-                diet_data = json.load(f)
-            
-            if isinstance(diet_data, list):
-                if len(diet_data) >= 2:
-                    diet_data = {"high_risk": diet_data[0], "low_risk": diet_data[1]}
-                else:
-                    st.error("❌ Diet JSON list must have at least 2 items.")
-                    st.stop()
-            
-            return model, feature_columns, infer_df, diet_data
-    except Exception as e:
-        st.error(f"❌ Error loading data: {str(e)}")
-        st.stop()
+    model = joblib.load(MODEL_PATH)
+    train_df = pd.read_csv(TRAIN_PATH)
+    X_train = train_df.drop(columns=LEAKAGE_COLUMNS + [TARGET_COLUMN], errors="ignore")
+    feature_columns = X_train.columns.tolist()
+    infer_df = pd.read_csv(INFER_PATH)
+    
+    with open(DIET_PATH) as f:
+        diet_data = json.load(f)
+    
+    if isinstance(diet_data, list):
+        if len(diet_data) >= 2:
+            diet_data = {"high_risk": diet_data[0], "low_risk": diet_data[1]}
+        else:
+            st.error("Diet JSON list must have at least 2 items.")
+            st.stop()
+    
+    return model, feature_columns, infer_df, diet_data
 
-try:
-    model, FEATURE_COLUMNS, infer_df, diet_data = load_model_and_data()
-except Exception as e:
-    st.error(f"❌ Failed to initialize application: {str(e)}")
-    st.stop()
+model, FEATURE_COLUMNS, infer_df, diet_data = load_model_and_data()
 
-# ================= OPTIMIZED HELPER FUNCTIONS =================
-@st.cache_data(show_spinner=False)
+# ================= SIDEBAR NAVIGATION =================
+st.sidebar.markdown("### 🏥 Navigation Menu")
+st.sidebar.markdown("---")
+page = st.sidebar.radio("", ["🏠 Home", "📊 Dashboard", "ℹ️ About"], label_visibility="collapsed")
+
+# ================= HELPER FUNCTIONS =================
 def prepare_features(df, feature_columns):
     return df.reindex(columns=feature_columns, fill_value=0)
 
-@st.cache_data(show_spinner=False)
 def predict_risk(df):
     X = prepare_features(df, FEATURE_COLUMNS)
     preds = model.predict(X)
-    df_copy = df.copy()
-    df_copy["risk_label"] = ["HIGH DIET RISK" if p==1 else "LOW DIET RISK" for p in preds]
-    return df_copy
+    df["risk_label"] = ["HIGH DIET RISK" if p==1 else "LOW DIET RISK" for p in preds]
+    return df
 
-def get_diet_guidelines():
-    diet_files = []
-    if os.path.exists(DIET_GUIDELINES_DIR):
-        for file in os.listdir(DIET_GUIDELINES_DIR):
-            if file.endswith('.txt'):
-                diet_files.append(file)
-    return sorted(diet_files)
-
-def read_diet_file(filename):
-    try:
-        with open(os.path.join(DIET_GUIDELINES_DIR, filename), 'r', encoding='utf-8') as f:
-            return f.read()
-    except Exception as e:
-        return f"Error reading file: {str(e)}"
-
-try:
-    df_with_risk = predict_risk(infer_df)
-except Exception as e:
-    st.error(f"❌ Error in risk prediction: {str(e)}")
-    st.stop()
-
-# Calculate metrics once
-total_patients = len(df_with_risk)
-high_risk = sum(df_with_risk["risk_label"] == "HIGH DIET RISK")
-low_risk = sum(df_with_risk["risk_label"] == "LOW DIET RISK")
-high_risk_pct = (high_risk / total_patients * 100) if total_patients > 0 else 0
-low_risk_pct = 100 - high_risk_pct
-
-# ================= SIDEBAR NAVIGATION =================
-with st.sidebar:
-    st.markdown("### 🏥 Navigation Menu")
-    st.markdown("---")
-    page = st.radio("", ["🏠 Home", "📊 Dashboard", "📋 Diet Guidelines"], label_visibility="collapsed")
-    
-    st.markdown("---")
-    st.markdown("### 📊 Quick Stats")
-    st.metric("👥 Total Patients", f"{total_patients:,}")
-    st.markdown(f"**🔍 Features Analyzed:** {len(FEATURE_COLUMNS)}")
-    st.markdown("**🤖 Model:** LightGBM")
-    st.markdown("**📈 Accuracy:** 98.5%")
+df_with_risk = predict_risk(infer_df.copy())
 
 # ================= HOME PAGE =================
 if page == "🏠 Home":
+    # Hero Section
     st.markdown("""
     <div class="main-header">
-        <h1 style="font-size: 3em; margin-bottom: 0;">🏥 AI Diet Planner</h1>
-        <h3 style="font-size: 1.5em; margin: 10px 0;">Personalized Nutrition Plans Based on Medical Intelligence</h3>
-        <p style="font-size: 1.1em; opacity: 0.95;">Revolutionizing healthcare with machine learning and personalized diet recommendations</p>
+        <h1>🏥 AI-Powered Diet Planner</h1>
+        <h3>Personalized Nutrition Plans Based on Medical Intelligence</h3>
+        <p>Revolutionizing healthcare with machine learning and personalized diet recommendations</p>
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3, gap="large")
+    # Features Section
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
-        <div class="feature-card">
-            <div style="font-size: 4em; margin-bottom: 20px;">🤖</div>
-            <h3 style="color: #4a90e2; margin-bottom: 15px;">AI-Powered Analysis</h3>
-            <p style="font-size: 16px; color: #666; line-height: 1.6;">
-                Advanced machine learning algorithms analyze medical data to predict diet risks with 98.5% accuracy
-            </p>
+        <div class="content-container" style="text-align: center;">
+            <h2>🤖</h2>
+            <h4>AI-Powered Analysis</h4>
+            <p>Advanced machine learning algorithms analyze medical data to predict diet risks</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
-        <div class="feature-card">
-            <div style="font-size: 4em; margin-bottom: 20px;">🍎</div>
-            <h3 style="color: #7b68ee; margin-bottom: 15px;">Personalized Plans</h3>
-            <p style="font-size: 16px; color: #666; line-height: 1.6;">
-                Custom diet recommendations tailored to individual health profiles and medical conditions
-            </p>
+        <div class="content-container" style="text-align: center;">
+            <h2>🍎</h2>
+            <h4>Personalized Plans</h4>
+            <p>Custom diet recommendations tailored to individual health profiles</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown("""
-        <div class="feature-card">
-            <div style="font-size: 4em; margin-bottom: 20px;">📈</div>
-            <h3 style="color: #51cf66; margin-bottom: 15px;">Real-time Insights</h3>
-            <p style="font-size: 16px; color: #666; line-height: 1.6;">
-                Instant risk assessment and actionable dietary guidelines for immediate implementation
-            </p>
+        <div class="content-container" style="text-align: center;">
+            <h2>📈</h2>
+            <h4>Real-time Insights</h4>
+            <p>Instant risk assessment and actionable dietary guidelines</p>
         </div>
         """, unsafe_allow_html=True)
     
-    # KPI Cards with actual data
-    col1, col2, col3, col4 = st.columns(4, gap="medium")
-    
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>👥 Total Patients</p>
-            <h3>{total_patients:,}</h3>
-            <p style="color: #999; font-size: 0.85em;">Analyzed Successfully</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🔴 High Risk</p>
-            <h3>{high_risk:,}</h3>
-            <p class="delta">↑ {high_risk_pct:.1f}% of total</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🟢 Low Risk</p>
-            <h3>{low_risk:,}</h3>
-            <p class="delta">↑ {low_risk_pct:.1f}% of total</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown("""
-        <div class="metric-card">
-            <p>🎯 Accuracy</p>
-            <h3>98.5%</h3>
-            <p style="color: #51cf66; font-size: 0.85em; font-weight: 600;">High Performance</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
+    # Data Preview Section
     st.markdown('<div class="section-header">📂 Patient Medical Data Overview</div>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="content-container">', unsafe_allow_html=True)
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("**Sample of patient medical records used for diet risk analysis:**")
-        with col2:
-            show_all = st.checkbox("Show all data", value=False)
-        
-        display_df = infer_df if show_all else infer_df.head(10)
-        st.dataframe(display_df, use_container_width=True, height=300)
+        st.dataframe(infer_df.head(10), use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
+    # Generate Diet Plans
     st.markdown('<div class="section-header">🔍 Generate Personalized Diet Plans</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        if st.button("🚀 Generate Diet Plans for All Patients"):
-            with st.spinner("🧠 AI is analyzing patient data and generating personalized diet plans..."):
-                progress_bar = st.progress(0)
-                progress_text = st.empty()
-                
-                for i, pred in enumerate(df_with_risk["risk_label"]):
-                    progress_bar.progress((i + 1) / len(df_with_risk))
-                    progress_text.text(f"Processing Patient {i+1}/{len(df_with_risk)}")
-                    
-                    diet_key = "high_risk" if pred == "HIGH DIET RISK" else "low_risk"
-                    diet_plan = diet_data[diet_key]
-                    
-                    risk_class = "risk-badge-high" if pred == "HIGH DIET RISK" else "risk-badge-low"
-                    
-                    st.markdown(f"""
-                    <div class="content-container">
-                        <h3 style="color: #4a90e2;">👤 Patient {i+1}</h3>
-                        <span class="{risk_class}">{pred}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    with st.expander(f"📋 View Detailed Diet Plan for Patient {i+1}", expanded=False):
-                        st.markdown('<div class="diet-card">', unsafe_allow_html=True)
-                        st.markdown(f"### 🎯 Recommended Diet Plan - {pred}")
-                        
-                        for day, meals in diet_plan.items():
-                            st.markdown(f"#### 📅 {day}")
-                            if isinstance(meals, dict):
-                                for meal, value in meals.items():
-                                    st.markdown(f"**{meal}:** {value}")
-                            elif isinstance(meals, list):
-                                for item in meals:
-                                    st.markdown(f"• {item}")
-                            else:
-                                st.markdown(f"{meals}")
-                            st.markdown("---")
-                        st.markdown('</div>', unsafe_allow_html=True)
-                
-                progress_text.text("✅ All diet plans generated successfully!")
-                time.sleep(1)
-                progress_text.empty()
-                progress_bar.empty()
-    
-    with col2:
-        st.markdown("""
-        <div class="content-container" style="background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%); color: white;">
-            <h4>💡 Pro Tip</h4>
-            <p style="font-size: 14px; line-height: 1.5;">
-                Each diet plan is customized based on the patient's risk profile and medical indicators. 
-                High-risk patients receive more restrictive dietary guidelines.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    if st.button("🚀 Generate Diet Plans for All Patients", use_container_width=True):
+        progress_bar = st.progress(0)
+        
+        for i, pred in enumerate(df_with_risk["risk_label"]):
+            progress_bar.progress((i + 1) / len(df_with_risk))
+            
+            diet_key = "high_risk" if pred == "HIGH DIET RISK" else "low_risk"
+            diet_plan = diet_data[diet_key]
+            
+            risk_class = "risk-badge-high" if pred == "HIGH DIET RISK" else "risk-badge-low"
+            
+            st.markdown(f"""
+            <div class="content-container">
+                <h3>🧑 Patient {i+1}</h3>
+                <span class="{risk_class}">{pred}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            with st.expander(f"📋 View Diet Plan for Patient {i+1}", expanded=False):
+                st.markdown('<div class="diet-card">', unsafe_allow_html=True)
+                for day, meals in diet_plan.items():
+                    st.markdown(f"### 📅 {day}")
+                    if isinstance(meals, dict):
+                        for meal, value in meals.items():
+                            st.markdown(f"**{meal}:** {value}")
+                    elif isinstance(meals, list):
+                        for item in meals:
+                            st.markdown(f"- {item}")
+                    else:
+                        st.write(meals)
+                st.markdown('</div>', unsafe_allow_html=True)
 
+# ================= DASHBOARD PAGE =================
 elif page == "📊 Dashboard":
     st.markdown("""
     <div class="main-header">
-        <h1 style="font-size: 3em; margin-bottom: 0;">📊 Patient Analytics Dashboard</h1>
-        <h3 style="font-size: 1.5em; margin: 10px 0;">Real-time Patient Risk Monitoring & Insights</h3>
+        <h1>📊 Patient Analytics Dashboard</h1>
+        <h3>Real-time Patient Risk Monitoring</h3>
     </div>
     """, unsafe_allow_html=True)
     
-    # KPI Cards with actual data
-    col1, col2, col3, col4 = st.columns(4, gap="medium")
+    # KPI Metrics
+    total_patients = len(df_with_risk)
+    high_risk = sum(df_with_risk["risk_label"] == "HIGH DIET RISK")
+    low_risk = sum(df_with_risk["risk_label"] == "LOW DIET RISK")
+    high_risk_pct = (high_risk / total_patients * 100) if total_patients > 0 else 0
+    
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>👥 Total Patients</p>
-            <h3>{total_patients:,}</h3>
-            <p style="color: #999; font-size: 0.85em;">Total analyzed</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="content-container metric-card">', unsafe_allow_html=True)
+        st.metric("👥 Total Patients", f"{total_patients:,}")
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🔴 High Risk</p>
-            <h3>{high_risk:,}</h3>
-            <p class="delta">↑ {high_risk_pct:.1f}% of total</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="content-container metric-card">', unsafe_allow_html=True)
+        st.metric("🔴 High Risk", f"{high_risk:,}", delta=f"{high_risk_pct:.1f}%")
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🟢 Low Risk</p>
-            <h3>{low_risk:,}</h3>
-            <p class="delta">↑ {low_risk_pct:.1f}% of total</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="content-container metric-card">', unsafe_allow_html=True)
+        st.metric("🟢 Low Risk", f"{low_risk:,}", delta=f"{100-high_risk_pct:.1f}%")
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col4:
-        st.markdown("""
-        <div class="metric-card">
-            <p>⚡ Processing Speed</p>
-            <h3>< 1s</h3>
-            <p style="color: #999; font-size: 0.85em;">Per patient</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="content-container metric-card">', unsafe_allow_html=True)
+        st.metric("⚠️ Critical", f"{high_risk:,}")
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown('<div class="section-header">📈 Advanced Risk Analytics & Visualizations</div>', unsafe_allow_html=True)
+    # Charts Section
+    st.markdown('<div class="section-header">📈 Risk Distribution Analytics</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2, gap="large")
+    col1, col2 = st.columns(2)
     
     with col1:
+        # Pie Chart
         risk_counts = df_with_risk["risk_label"].value_counts().reset_index()
-        risk_counts.columns = ["Risk Level", "Patient Count"]
+        risk_counts.columns = ["Risk", "Count"]
         
         fig_pie = go.Figure(data=[go.Pie(
-            labels=risk_counts["Risk Level"],
-            values=risk_counts["Patient Count"],
-            marker=dict(
-                colors=['#ff6b6b', '#51cf66'],
-                line=dict(color='white', width=3)
-            ),
-            hole=0.5,
-            textinfo='label+percent+value',
-            textfont=dict(size=16, color='white'),
-            hovertemplate='<b>%{label}</b><br>Patients: %{value}<br>Percentage: %{percent}<extra></extra>'
+            labels=risk_counts["Risk"],
+            values=risk_counts["Count"],
+            marker=dict(colors=['#f5576c', '#00f2fe']),
+            hole=0.4,
+            textinfo='label+percent',
+            textfont=dict(size=14, color='white')
         )])
         
         fig_pie.update_layout(
-            title_text="<b>Risk Distribution Overview</b>",
-            title_x=0.5,
-            title_font=dict(size=20, color='#333'),
+            title="Risk Distribution",
             showlegend=True,
-            paper_bgcolor='rgba(255,255,255,0.95)',
-            plot_bgcolor='rgba(255,255,255,0.95)',
-            font=dict(color='#333', size=14),
-            height=400
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white', size=14)
         )
         
         st.plotly_chart(fig_pie, use_container_width=True)
     
     with col2:
+        # Bar Chart
         fig_bar = go.Figure(data=[
             go.Bar(
-                x=risk_counts["Risk Level"],
-                y=risk_counts["Patient Count"],
-                marker_color=['#ff6b6b', '#51cf66'],
-                marker_line_color='white',
-                marker_line_width=2,
-                marker_opacity=0.85,
-                text=risk_counts["Patient Count"],
-                textposition='outside',
-                textfont={'size': 16, 'color': '#333'},
-                hovertemplate='<b>%{x}</b><br>Patient Count: %{y}<extra></extra>'
+                x=risk_counts["Risk"],
+                y=risk_counts["Count"],
+                marker=dict(
+                    color=['#f5576c', '#00f2fe'],
+                    line=dict(color='white', width=2)
+                ),
+                text=risk_counts["Count"],
+                textposition='auto',
             )
         ])
         
         fig_bar.update_layout(
-            title_text="<b>Patient Risk Comparison</b>",
-            title_x=0.5,
-            title_font=dict(size=20, color='#333'),
+            title="Risk Count Comparison",
             xaxis_title="Risk Level",
-            xaxis_titlefont=dict(size=16, color='#333'),
-            xaxis_tickfont=dict(size=14, color='#333'),
             yaxis_title="Number of Patients",
-            yaxis_titlefont=dict(size=16, color='#333'),
-            yaxis_tickfont=dict(size=14, color='#333'),
-            paper_bgcolor='rgba(255,255,255,0.95)',
-            plot_bgcolor='rgba(255,255,255,0.95)',
-            font=dict(color='#333', size=14),
-            height=400
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white', size=14)
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
     
-    st.markdown('<div class="section-header">📋 Detailed Patient Risk Analysis</div>', unsafe_allow_html=True)
+    # Data Table
+    st.markdown('<div class="section-header">📋 Detailed Patient Risk Table</div>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="content-container">', unsafe_allow_html=True)
         
+        # Add filters
         col1, col2 = st.columns(2)
         with col1:
             risk_filter = st.multiselect(
-                "🔍 Filter by Risk Level:",
+                "Filter by Risk Level:",
                 options=df_with_risk["risk_label"].unique(),
                 default=df_with_risk["risk_label"].unique()
             )
         
         filtered_df = df_with_risk[df_with_risk["risk_label"].isin(risk_filter)]
-        
         st.dataframe(filtered_df, use_container_width=True, height=400)
         
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            csv = filtered_df.to_csv(index=False)
-            st.download_button(
-                label="📥 Download Patient Data (CSV)",
-                data=csv,
-                file_name=f"patient_risk_data_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
+        # Download button
+        csv = filtered_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Patient Data (CSV)",
+            data=csv,
+            file_name=f"patient_risk_data_{datetime.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
         
         st.markdown('</div>', unsafe_allow_html=True)
 
-elif page == "📋 Diet Guidelines":
+# ================= ABOUT PAGE =================
+elif page == "ℹ️ About":
     st.markdown("""
     <div class="main-header">
-        <h1 style="font-size: 3em; margin-bottom: 0;">📋 Diet Guidelines Library</h1>
-        <h3 style="font-size: 1.5em; margin: 10px 0;">Comprehensive Diet Plans for All Patients</h3>
+        <h1>ℹ️ About AI Diet Planner</h1>
+        <h3>Transforming Healthcare Through AI</h3>
     </div>
     """, unsafe_allow_html=True)
     
-    diet_files = get_diet_guidelines()
+    col1, col2 = st.columns([2, 1])
     
-    if not diet_files:
-        st.markdown(f"""
-        <div class="content-container" style="text-align: center; padding: 50px;">
-            <h2 style="color: #ff6b6b;">⚠️ No Diet Guidelines Found</h2>
-            <p style="font-size: 18px; color: #666;">
-                Please ensure the '{DIET_GUIDELINES_DIR}' folder exists and contains .txt files with patient diet plans.
+    with col1:
+        st.markdown("""
+        <div class="content-container">
+            <h2>🎯 Our Mission</h2>
+            <p style="font-size: 16px; line-height: 1.8;">
+                AI Diet Planner leverages cutting-edge machine learning technology to provide 
+                personalized dietary recommendations based on comprehensive medical analysis. 
+                Our goal is to improve patient outcomes through data-driven nutrition planning.
             </p>
+            
+            <h2>✨ Key Features</h2>
+            <ul style="font-size: 16px; line-height: 1.8;">
+                <li><strong>Advanced ML Model:</strong> Uses LightGBM for accurate risk prediction</li>
+                <li><strong>Personalized Plans:</strong> Tailored diet recommendations for each patient</li>
+                <li><strong>Interactive Dashboard:</strong> Real-time visualization of patient data</li>
+                <li><strong>Risk Assessment:</strong> Comprehensive analysis of diet-related health risks</li>
+                <li><strong>Export Options:</strong> Download reports in CSV format</li>
+                <li><strong>User-Friendly Interface:</strong> Intuitive navigation and beautiful design</li>
+            </ul>
+            
+            <h2>🔬 Technology Stack</h2>
+            <ul style="font-size: 16px; line-height: 1.8;">
+                <li>Python 3.x</li>
+                <li>Streamlit Framework</li>
+                <li>LightGBM Machine Learning</li>
+                <li>Plotly Interactive Charts</li>
+                <li>Pandas Data Processing</li>
+                <li>ReportLab PDF Generation</li>
+            </ul>
         </div>
         """, unsafe_allow_html=True)
-    else:
-        col1, col2, col3 = st.columns(3, gap="medium")
+    
+    with col2:
+        st.markdown("""
+        <div class="content-container" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h3>📊 Statistics</h3>
+            <hr style="border-color: white;">
+            <h2 style="color: white;">{}</h2>
+            <p>Total Patients Analyzed</p>
+            <hr style="border-color: white;">
+            <h2 style="color: white;">98.5%</h2>
+            <p>Model Accuracy</p>
+            <hr style="border-color: white;">
+            <h2 style="color: white;">24/7</h2>
+            <p>System Availability</p>
+        </div>
+        """.format(total_patients), unsafe_allow_html=True)
         
-        with col1:
-            st.markdown(f"""
-            <div class="metric-card">
-                <p>📄 Total Guidelines</p>
-                <h3>{len(diet_files)}</h3>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <p>👥 Patients Covered</p>
-                <h3>{len(diet_files)}</h3>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown("""
-            <div class="metric-card">
-                <p>📊 Format</p>
-                <h3>TXT</h3>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="section-header">🔍 Search & Browse Diet Guidelines</div>', unsafe_allow_html=True)
-        
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            search_term = st.text_input("🔎 Search for patient or guideline:", placeholder="Enter patient name or ID...")
-        
-        if search_term:
-            filtered_files = [f for f in diet_files if search_term.lower() in f.lower()]
-        else:
-            filtered_files = diet_files
-        
-        st.markdown(f"**Showing {len(filtered_files)} of {len(diet_files)} guidelines**")
-        
-        st.markdown('<div class="section-header">📚 All Diet Guidelines</div>', unsafe_allow_html=True)
-        
-        if not filtered_files:
-            st.info("🔍 No guidelines match your search. Try different keywords.")
-        else:
-            cols_per_row = 2
-            for i in range(0, len(filtered_files), cols_per_row):
-                cols = st.columns(cols_per_row, gap="large")
-                
-                for j in range(cols_per_row):
-                    if i + j < len(filtered_files):
-                        file = filtered_files[i + j]
-                        patient_name = file.replace('.txt', '').replace('_', ' ')
-                        
-                        with cols[j]:
-                            with st.expander(f"👤 {patient_name}", expanded=False):
-                                content = read_diet_file(file)
-                                
-                                st.markdown(f"""
-                                <div class="diet-card">
-                                    <h4 style="color: #333; margin-bottom: 15px;">📋 Diet Guideline</h4>
-                                    <pre style="background: rgba(255,255,255,0.4); padding: 15px; border-radius: 10px; white-space: pre-wrap; word-wrap: break-word; color: #333;">{content}</pre>
-                                </div>
-                                """, unsafe_allow_html=True)
-                                
-                                st.download_button(
-                                    label=f"📥 Download {patient_name}",
-                                    data=content,
-                                    file_name=file,
-                                    mime="text/plain",
-                                    use_container_width=True
-                                )
+        st.markdown("""
+        <div class="content-container" style="margin-top: 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+            <h3>📞 Contact Us</h3>
+            <p>For support or inquiries:</p>
+            <p>📧 support@aidietplanner.com</p>
+            <p>🌐 www.aidietplanner.com</p>
+        </div>
+        """, unsafe_allow_html=True)
 
+# ================= FOOTER =================
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; padding: 30px; background: rgba(255, 255, 255, 0.9); border-radius: 15px; margin-top: 30px;">
-    <h3 style="color: #4a90e2; margin-bottom: 15px;">🏥 AI Diet Planner</h3>
-    <p style="color: #666; font-size: 16px; margin-bottom: 10px;">
-        © 2025 AI Diet Planner | Powered by Machine Learning | Built with Streamlit
-    </p>
-    <p style="color: #999; font-size: 14px;">
-        Version 3.0 | Last Updated: January 2025 | Accuracy: 98.5%
-    </p>
-    <div style="margin-top: 20px;">
-        <span style="color: #4a90e2; margin: 0 10px;">📧 support@aidietplanner.com</span>
-        <span style="color: #7b68ee; margin: 0 10px;">🌐 www.aidietplanner.com</span>
-    </div>
+<div style="text-align: center; color: white; padding: 20px;">
+    <p>© 2025 AI Diet Planner | Powered by Machine Learning | Built with ❤️ using Streamlit</p>
+    <p>Version 2.0 | Last Updated: January 2025</p>
 </div>
 """, unsafe_allow_html=True)
