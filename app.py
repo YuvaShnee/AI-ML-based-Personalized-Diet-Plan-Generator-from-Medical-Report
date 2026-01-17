@@ -664,4 +664,31 @@ elif page == "📋 Diet Guidelines":
                                 st.markdown(f"""
                                 <div class="diet-card">
                                     <h4 style="color: #333; margin-bottom: 15px;">📋 Diet Guideline</h4>
-                                    <pre style="background: rgba(255,255,255,0.4); padding: 15px; border-radius: 10px;
+                                    <pre style="background: rgba(255,255,255,0.4); padding: 15px; border-radius: 10px; white-space: pre-wrap; word-wrap: break-word; color: #333;">{content}</pre>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                
+                                st.download_button(
+                                    label=f"📥 Download {patient_name}",
+                                    data=content,
+                                    file_name=file,
+                                    mime="text/plain",
+                                    use_container_width=True
+                                )
+
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; padding: 30px; background: rgba(255, 255, 255, 0.9); border-radius: 15px; margin-top: 30px;">
+    <h3 style="color: #4a90e2; margin-bottom: 15px;">🏥 AI Diet Planner</h3>
+    <p style="color: #666; font-size: 16px; margin-bottom: 10px;">
+        © 2025 AI Diet Planner | Powered by Machine Learning | Built with Streamlit
+    </p>
+    <p style="color: #999; font-size: 14px;">
+        Version 3.0 | Last Updated: January 2025 | Accuracy: 98.5%
+    </p>
+    <div style="margin-top: 20px;">
+        <span style="color: #4a90e2; margin: 0 10px;">📧 support@aidietplanner.com</span>
+        <span style="color: #7b68ee; margin: 0 10px;">🌐 www.aidietplanner.com</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
