@@ -6,6 +6,13 @@ import os
 import plotly.graph_objects as go
 from datetime import datetime
 import time
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from io import BytesIO
 
 # ================= STREAMLIT CONFIG =================
 st.set_page_config(
@@ -19,15 +26,31 @@ st.set_page_config(
 st.markdown("""
 <style>
     .stApp {
-        background: linear-gradient(135deg, #f0f4ff 0%, #fef5ff 50%, #fff9f0 100%);
+        background: linear-gradient(135deg, 
+            #e3f2fd 0%, 
+            #fff9c4 15%, 
+            #f3e5f5 30%, 
+            #ffe0f0 45%, 
+            #e1f5fe 60%, 
+            #fff3e0 75%, 
+            #f1f8e9 90%, 
+            #fce4ec 100%);
         min-height: 100vh;
+        animation: gradientShift 15s ease infinite;
     }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
     .block-container {
         padding-top: 1rem;
         padding-bottom: 1rem;
     }
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+        background: linear-gradient(180deg, #ffffff 0%, #f0f8ff 50%, #fff9f0 100%);
         border-right: 2px solid #e8efff;
     }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
@@ -69,7 +92,7 @@ st.markdown("""
         margin-top: 5px;
     }
     .main-header {
-        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
+        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 50%, #ff6b9d 100%);
         padding: 50px 40px;
         border-radius: 25px;
         color: white;
@@ -78,7 +101,7 @@ st.markdown("""
         box-shadow: 0 10px 40px rgba(74, 144, 226, 0.25);
     }
     .section-header {
-        background: linear-gradient(90deg, #4a90e2 0%, #7b68ee 100%);
+        background: linear-gradient(90deg, #4a90e2 0%, #7b68ee 50%, #ff6b9d 100%);
         padding: 20px 30px;
         border-radius: 15px;
         color: white;
@@ -166,6 +189,13 @@ st.markdown("""
         color: #4a90e2;
         font-weight: 600;
     }
+    .pdf-download-section {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        padding: 25px;
+        border-radius: 15px;
+        margin: 20px 0;
+        border: 2px dashed #4a90e2;
+    }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -184,6 +214,120 @@ LEAKAGE_COLUMNS = [
     "cancer_severity_score", "diet_risk_score", "continuous_risk_score",
     "liver_risk_score"
 ]
+
+# ================= PDF GENERATION FUNCTION =================
+def create_diet_plan_pdf(patient_data_list, df_with_risk):
+    """Generate a PDF with all patient diet plans"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#4a90e2'),
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    header_style = ParagraphStyle(
+        'CustomHeader',
+        parent=styles['Heading2'],
+        fontSize=16,
+        textColor=colors.HexColor('#7b68ee'),
+        spaceAfter=12,
+        fontName='Helvetica-Bold'
+    )
+    
+    subheader_style = ParagraphStyle(
+        'CustomSubHeader',
+        parent=styles['Heading3'],
+        fontSize=14,
+        textColor=colors.HexColor('#4a90e2'),
+        spaceAfter=10,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=11,
+        spaceAfter=8,
+        fontName='Helvetica'
+    )
+    
+    # Add main title
+    elements.append(Paragraph("🏥 AI Diet Planner", title_style))
+    elements.append(Paragraph("Personalized Nutrition Plans", header_style))
+    elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", normal_style))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Add summary table
+    summary_data = [
+        ['Metric', 'Value'],
+        ['Total Patients', str(len(df_with_risk))],
+        ['High Risk Patients', str(sum(df_with_risk["risk_label"] == "HIGH DIET RISK"))],
+        ['Low Risk Patients', str(sum(df_with_risk["risk_label"] == "LOW DIET RISK"))],
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[3*inch, 3*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4a90e2')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+    ]))
+    
+    elements.append(summary_table)
+    elements.append(Spacer(1, 0.3*inch))
+    elements.append(PageBreak())
+    
+    # Add individual patient diet plans
+    for i, (pred, diet_plan) in enumerate(patient_data_list, 1):
+        elements.append(Paragraph(f"Patient {i}", header_style))
+        
+        risk_color = colors.HexColor('#ff6b6b') if pred == "HIGH DIET RISK" else colors.HexColor('#51cf66')
+        risk_para = Paragraph(f"<b>Risk Level: {pred}</b>", 
+                             ParagraphStyle('RiskStyle', parent=normal_style, 
+                                          textColor=risk_color, fontSize=12, fontName='Helvetica-Bold'))
+        elements.append(risk_para)
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Add diet plan details
+        for day, meals in diet_plan.items():
+            elements.append(Paragraph(f"📅 {day}", subheader_style))
+            
+            if isinstance(meals, dict):
+                for meal, value in meals.items():
+                    elements.append(Paragraph(f"<b>{meal}:</b> {value}", normal_style))
+            elif isinstance(meals, list):
+                for item in meals:
+                    elements.append(Paragraph(f"• {item}", normal_style))
+            else:
+                elements.append(Paragraph(str(meals), normal_style))
+            
+            elements.append(Spacer(1, 0.15*inch))
+        
+        # Add page break after each patient except the last one
+        if i < len(patient_data_list):
+            elements.append(PageBreak())
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
 
 # ================= OPTIMIZED DATA LOADING =================
 @st.cache_resource(show_spinner=False)
@@ -363,12 +507,18 @@ if page == "🏠 Home":
                 progress_bar = st.progress(0)
                 progress_text = st.empty()
                 
+                # Store patient data for PDF generation
+                patient_data_list = []
+                
                 for i, pred in enumerate(df_with_risk["risk_label"]):
                     progress_bar.progress((i + 1) / len(df_with_risk))
                     progress_text.text(f"Processing Patient {i+1}/{len(df_with_risk)}")
                     
                     diet_key = "high_risk" if pred == "HIGH DIET RISK" else "low_risk"
                     diet_plan = diet_data[diet_key]
+                    
+                    # Store for PDF
+                    patient_data_list.append((pred, diet_plan))
                     
                     risk_class = "risk-badge-high" if pred == "HIGH DIET RISK" else "risk-badge-low"
                     
@@ -400,6 +550,31 @@ if page == "🏠 Home":
                 time.sleep(1)
                 progress_text.empty()
                 progress_bar.empty()
+                
+                # PDF Download Section
+                st.markdown('<div class="section-header">📥 Download Diet Plans</div>', unsafe_allow_html=True)
+                st.markdown('<div class="pdf-download-section">', unsafe_allow_html=True)
+                st.markdown("""
+                    <h3 style="color: #4a90e2; text-align: center; margin-bottom: 15px;">📄 Export All Diet Plans to PDF</h3>
+                    <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                        Download a comprehensive PDF report containing all patient diet plans for easy sharing and archiving.
+                    </p>
+                """, unsafe_allow_html=True)
+                
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    # Generate PDF
+                    pdf_buffer = create_diet_plan_pdf(patient_data_list, df_with_risk)
+                    
+                    st.download_button(
+                        label="📥 Download All Diet Plans (PDF)",
+                        data=pdf_buffer,
+                        file_name=f"AI_Diet_Plans_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                
+                st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
