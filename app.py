@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import joblib
@@ -7,7 +6,6 @@ import os
 import plotly.graph_objects as go
 from datetime import datetime
 import time
-import re
 
 # ================= STREAMLIT CONFIG =================
 st.set_page_config(
@@ -168,39 +166,6 @@ st.markdown("""
         color: #4a90e2;
         font-weight: 600;
     }
-    .patient-card {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.1);
-        border: 1px solid rgba(74, 144, 226, 0.1);
-        margin-bottom: 20px;
-    }
-    .condition-badge {
-        background: linear-gradient(135deg, #ff9800 0%, #ff6b00 100%);
-        color: white;
-        padding: 8px 20px;
-        border-radius: 20px;
-        font-weight: 600;
-        display: inline-block;
-        font-size: 14px;
-        margin: 10px 0;
-    }
-    .day-section {
-        background: rgba(74, 144, 226, 0.05);
-        padding: 20px;
-        border-radius: 12px;
-        margin: 15px 0;
-        border-left: 4px solid #4a90e2;
-    }
-    .meal-item {
-        background: white;
-        padding: 12px 18px;
-        border-radius: 8px;
-        margin: 8px 0;
-        border-left: 3px solid #51cf66;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -212,7 +177,6 @@ MODEL_PATH = "diet_app/best_model_LightGBM.pkl"
 TRAIN_PATH = "diet_app/train_data.csv"
 INFER_PATH = "diet_app/final_unique_range_valid_medical_data.csv"
 DIET_PATH = "diets/Actionable_Diet_Guidelines_from_TXT.json"
-RULEBASED_DIET_PATH = "diet/RuleBased_Diet_Plans.txt"
 
 TARGET_COLUMN = "binary_diet"
 LEAKAGE_COLUMNS = [
@@ -266,57 +230,6 @@ def predict_risk(df):
     df_copy["risk_label"] = ["HIGH DIET RISK" if p==1 else "LOW DIET RISK" for p in preds]
     return df_copy
 
-def parse_rulebased_diet_file(filepath):
-    """Parse the RuleBased_Diet_Plans.txt file and extract patient diet plans."""
-    patients = []
-    
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Split by "Patient:" to get individual patient sections
-        patient_sections = re.split(r'Patient:\s*', content)
-        
-        for section in patient_sections[1:]:  # Skip first empty split
-            lines = section.strip().split('\n')
-            if not lines:
-                continue
-            
-            patient_data = {
-                'name': lines[0].strip(),
-                'condition': '',
-                'days': {}
-            }
-            
-            current_day = None
-            
-            for line in lines[1:]:
-                line = line.strip()
-                if not line:
-                    continue
-                
-                # Check for medical condition
-                if line.startswith('Medical Condition:'):
-                    patient_data['condition'] = line.replace('Medical Condition:', '').strip()
-                
-                # Check for day
-                elif line.startswith('Day '):
-                    current_day = line.rstrip(':')
-                    patient_data['days'][current_day] = []
-                
-                # Add meal items to current day
-                elif current_day and ':' in line:
-                    patient_data['days'][current_day].append(line)
-            
-            if patient_data['name']:
-                patients.append(patient_data)
-    
-    except Exception as e:
-        st.error(f"Error parsing diet file: {str(e)}")
-        return []
-    
-    return patients
-
 try:
     df_with_risk = predict_risk(infer_df)
 except Exception as e:
@@ -334,7 +247,7 @@ low_risk_pct = 100 - high_risk_pct
 with st.sidebar:
     st.markdown("### 🏥 Navigation Menu")
     st.markdown("---")
-    page = st.radio("", ["🏠 Home", "📊 Dashboard", "📋 Diet Guidelines"], label_visibility="collapsed")
+    page = st.radio("", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
     
     st.markdown("---")
     st.markdown("### 📊 Quick Stats")
@@ -635,143 +548,6 @@ elif page == "📊 Dashboard":
             )
         
         st.markdown('</div>', unsafe_allow_html=True)
-
-elif page == "📋 Diet Guidelines":
-    st.markdown("""
-    <div class="main-header">
-        <h1 style="font-size: 3em; margin-bottom: 0;">📋 Diet Guidelines Library</h1>
-        <h3 style="font-size: 1.5em; margin: 10px 0;">Comprehensive Diet Plans for All Patients</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Parse the RuleBased_Diet_Plans.txt file
-    if os.path.exists(RULEBASED_DIET_PATH):
-        patients_diet_plans = parse_rulebased_diet_file(RULEBASED_DIET_PATH)
-        
-        if not patients_diet_plans:
-            st.markdown("""
-            <div class="content-container" style="text-align: center; padding: 50px;">
-                <h2 style="color: #ff6b6b;">⚠️ No Diet Plans Found</h2>
-                <p style="font-size: 18px; color: #666;">
-                    The RuleBased_Diet_Plans.txt file appears to be empty or incorrectly formatted.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            # Display statistics
-            col1, col2, col3 = st.columns(3, gap="medium")
-            
-            with col1:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <p>👥 Total Patients</p>
-                    <h3>{len(patients_diet_plans)}</h3>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col2:
-                conditions = [p['condition'] for p in patients_diet_plans if p['condition']]
-                unique_conditions = len(set(conditions))
-                st.markdown(f"""
-                <div class="metric-card">
-                    <p>🏥 Medical Conditions</p>
-                    <h3>{unique_conditions}</h3>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col3:
-                total_days = sum(len(p['days']) for p in patients_diet_plans)
-                st.markdown(f"""
-                <div class="metric-card">
-                    <p>📅 Total Diet Days</p>
-                    <h3>{total_days}</h3>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown('<div class="section-header">🔍 Search & Browse Diet Guidelines</div>', unsafe_allow_html=True)
-            
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                search_term = st.text_input("🔎 Search for patient or condition:", placeholder="Enter patient name or medical condition...")
-            
-            # Filter patients based on search
-            if search_term:
-                filtered_patients = [
-                    p for p in patients_diet_plans 
-                    if search_term.lower() in p['name'].lower() or search_term.lower() in p['condition'].lower()
-                ]
-            else:
-                filtered_patients = patients_diet_plans
-            
-            st.markdown(f"**Showing {len(filtered_patients)} of {len(patients_diet_plans)} patients**")
-            
-            st.markdown('<div class="section-header">📚 All Patient Diet Plans</div>', unsafe_allow_html=True)
-            
-            if not filtered_patients:
-                st.info("🔍 No patients match your search. Try different keywords.")
-            else:
-                # Display patient diet plans in a grid layout
-                cols_per_row = 2
-                for i in range(0, len(filtered_patients), cols_per_row):
-                    cols = st.columns(cols_per_row, gap="large")
-                    
-                    for j in range(cols_per_row):
-                        if i + j < len(filtered_patients):
-                            patient = filtered_patients[i + j]
-                            
-                            with cols[j]:
-                                with st.expander(f"👤 {patient['name']}", expanded=False):
-                                    st.markdown(f"""
-                                    <div class="patient-card">
-                                        <h3 style="color: #4a90e2; margin-bottom: 15px;">👤 {patient['name']}</h3>
-                                        <span class="condition-badge">🏥 {patient['condition']}</span>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                                    
-                                    # Display diet plan by days
-                                    for day, meals in patient['days'].items():
-                                        st.markdown(f"""
-                                        <div class="day-section">
-                                            <h4 style="color: #4a90e2; margin-bottom: 12px;">📅 {day}</h4>
-                                        """, unsafe_allow_html=True)
-                                        
-                                        for meal in meals:
-                                            st.markdown(f"""
-                                            <div class="meal-item">
-                                                <strong style="color: #333;">{meal}</strong>
-                                            </div>
-                                            """, unsafe_allow_html=True)
-                                        
-                                        st.markdown("</div>", unsafe_allow_html=True)
-                                    
-                                    # Download button for individual patient
-                                    diet_text = f"Patient: {patient['name']}\nMedical Condition: {patient['condition']}\n\n"
-                                    for day, meals in patient['days'].items():
-                                        diet_text += f"{day}:\n"
-                                        for meal in meals:
-                                            diet_text += f"  {meal}\n"
-                                        diet_text += "\n"
-                                    
-                                    st.download_button(
-                                        label=f"📥 Download {patient['name']}'s Plan",
-                                        data=diet_text,
-                                        file_name=f"diet_plan_{patient['name'].replace(' ', '_')}.txt",
-                                        mime="text/plain",
-                                        use_container_width=True,
-                                        key=f"download_{i}_{j}"
-                                    )
-    else:
-        st.markdown(f"""
-        <div class="content-container" style="text-align: center; padding: 50px;">
-            <h2 style="color: #ff6b6b;">⚠️ Diet File Not Found</h2>
-            <p style="font-size: 18px; color: #666;">
-                The file <strong>{RULEBASED_DIET_PATH}</strong> does not exist.
-            </p>
-            <p style="font-size: 16px; color: #999;">
-                Please ensure the file is in the correct location.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown("""
