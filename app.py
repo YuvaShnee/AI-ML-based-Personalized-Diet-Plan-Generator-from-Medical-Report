@@ -499,11 +499,9 @@ elif page == "📊 Dashboard":
         fig_pie.update_layout(
             title_text="<b>Risk Distribution Overview</b>",
             title_x=0.5,
-            title_font=dict(size=20, color='#333'),
             showlegend=True,
             paper_bgcolor='rgba(255,255,255,0.95)',
             plot_bgcolor='rgba(255,255,255,0.95)',
-            font=dict(color='#333', size=14),
             height=400
         )
         
@@ -528,16 +526,10 @@ elif page == "📊 Dashboard":
         fig_bar.update_layout(
             title_text="<b>Patient Risk Comparison</b>",
             title_x=0.5,
-            title_font=dict(size=20, color='#333'),
             xaxis_title="Risk Level",
-            xaxis_titlefont=dict(size=16, color='#333'),
-            xaxis_tickfont=dict(size=14, color='#333'),
             yaxis_title="Number of Patients",
-            yaxis_titlefont=dict(size=16, color='#333'),
-            yaxis_tickfont=dict(size=14, color='#333'),
             paper_bgcolor='rgba(255,255,255,0.95)',
             plot_bgcolor='rgba(255,255,255,0.95)',
-            font=dict(color='#333', size=14),
             height=400
         )
         
