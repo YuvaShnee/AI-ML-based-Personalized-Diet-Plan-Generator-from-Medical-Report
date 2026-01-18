@@ -177,7 +177,11 @@ st.markdown("""
         border-left: 4px solid #3b82f6;
         text-align: center;
         transition: all 0.3s ease;
-        height: 100%;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     
     .metric-card:hover {
@@ -187,31 +191,32 @@ st.markdown("""
     
     .metric-card h3 {
         color: #1e40af;
-        font-size: 2.5em;
-        margin: 0.8rem 0;
+        font-size: 3em;
+        margin: 0.5rem 0;
         font-weight: 700;
+        line-height: 1;
     }
     
     .metric-card .label {
         color: #64748b;
-        font-size: 0.95em;
+        font-size: 0.85em;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
     }
     
     .metric-card .sublabel {
         color: #94a3b8;
-        font-size: 0.85em;
-        margin-top: 0.5rem;
+        font-size: 0.8em;
+        margin-top: 0.3rem;
     }
     
     .metric-card .delta {
         color: #10b981;
-        font-size: 0.9em;
+        font-size: 0.85em;
         font-weight: 600;
-        margin-top: 0.5rem;
+        margin-top: 0.3rem;
     }
     
     /* Feature Cards */
@@ -222,7 +227,11 @@ st.markdown("""
         text-align: center;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         transition: all 0.3s ease;
-        height: 100%;
+        height: 320px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         border-top: 4px solid #3b82f6;
     }
     
@@ -232,21 +241,24 @@ st.markdown("""
     }
     
     .feature-card .icon {
-        font-size: 3.5em;
+        font-size: 4em;
         margin-bottom: 1.5rem;
+        line-height: 1;
     }
     
     .feature-card h3 {
         color: #1e293b;
         margin-bottom: 1rem;
         font-weight: 700;
-        font-size: 1.3em;
+        font-size: 1.4em;
+        line-height: 1.3;
     }
     
     .feature-card p {
         color: #64748b;
-        font-size: 15px;
+        font-size: 0.95em;
         line-height: 1.6;
+        margin: 0;
     }
     
     /* Content Containers */
@@ -747,24 +759,24 @@ elif page == "📊 Dashboard":
         )])
         
         fig_pie.update_layout(
-            title=dict(
-                text="<b>Risk Distribution Overview</b>",
-                x=0.5,
-                font=dict(size=18, color='#1e293b', family='Inter')
-            ),
+            title={
+                'text': "<b>Risk Distribution Overview</b>",
+                'x': 0.5,
+                'font': {'size': 18, 'color': '#1e293b', 'family': 'Inter'}
+            },
             showlegend=True,
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=-0.15,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=12)
-            ),
+            legend={
+                'orientation': "h",
+                'yanchor': "bottom",
+                'y': -0.15,
+                'xanchor': "center",
+                'x': 0.5,
+                'font': {'size': 12}
+            },
             paper_bgcolor='white',
             plot_bgcolor='white',
             height=400,
-            margin=dict(t=60, b=60, l=40, r=40)
+            margin={'t': 60, 'b': 60, 'l': 40, 'r': 40}
         )
         
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -786,25 +798,25 @@ elif page == "📊 Dashboard":
         ])
         
         fig_bar.update_layout(
-            title=dict(
-                text="<b>Patient Risk Comparison</b>",
-                x=0.5,
-                font=dict(size=18, color='#1e293b', family='Inter')
-            ),
-            xaxis=dict(
-                title="Risk Level",
-                titlefont=dict(size=14, color='#64748b'),
-                tickfont=dict(size=12, color='#64748b')
-            ),
-            yaxis=dict(
-                title="Number of Patients",
-                titlefont=dict(size=14, color='#64748b'),
-                tickfont=dict(size=12, color='#64748b')
-            ),
+            title={
+                'text': "<b>Patient Risk Comparison</b>",
+                'x': 0.5,
+                'font': {'size': 18, 'color': '#1e293b', 'family': 'Inter'}
+            },
+            xaxis={
+                'title': "Risk Level",
+                'titlefont': {'size': 14, 'color': '#64748b'},
+                'tickfont': {'size': 12, 'color': '#64748b'}
+            },
+            yaxis={
+                'title': "Number of Patients",
+                'titlefont': {'size': 14, 'color': '#64748b'},
+                'tickfont': {'size': 12, 'color': '#64748b'}
+            },
             paper_bgcolor='white',
             plot_bgcolor='white',
             height=400,
-            margin=dict(t=60, b=60, l=60, r=40)
+            margin={'t': 60, 'b': 60, 'l': 60, 'r': 40}
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
