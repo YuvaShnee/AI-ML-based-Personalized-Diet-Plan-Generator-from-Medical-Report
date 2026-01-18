@@ -15,399 +15,160 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ================= PROFESSIONAL CUSTOM CSS =================
+# ================= CUSTOM CSS =================
 st.markdown("""
 <style>
-    /* Global Styles */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
-    * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    
     .stApp {
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #f0f4ff 0%, #fef5ff 50%, #fff9f0 100%);
+        min-height: 100vh;
     }
-    
     .block-container {
-        padding: 2rem 3rem;
-        max-width: 1400px;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
     }
-    
-    /* Sidebar Professional Styling */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
-        padding: 2rem 1rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+        border-right: 2px solid #e8efff;
     }
-    
-    [data-testid="stSidebar"] > div:first-child {
-        padding-top: 2rem;
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #4a90e2 !important;
     }
-    
-    /* Sidebar Text Colors */
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] .stMarkdown {
-        color: white !important;
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
+        color: #333 !important;
     }
-    
-    /* Navigation Header in Sidebar */
-    .nav-header {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    /* Radio Buttons Professional Style */
-    [data-testid="stSidebar"] .stRadio > label {
-        color: white !important;
-        font-size: 14px !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 1rem;
-    }
-    
-    [data-testid="stSidebar"] .stRadio [role="radiogroup"] {
-        gap: 0.5rem;
-    }
-    
-    [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"] {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 14px 20px;
-        border-radius: 10px;
-        margin: 6px 0;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-    }
-    
-    [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"]:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.4);
-        transform: translateX(5px);
-    }
-    
-    [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"] span {
-        color: white !important;
-        font-size: 15px !important;
-        font-weight: 500;
-    }
-    
-    /* Sidebar Metrics */
-    [data-testid="stSidebar"] [data-testid="stMetric"] {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 0.5rem 0;
-    }
-    
-    [data-testid="stSidebar"] [data-testid="stMetricLabel"] {
-        color: rgba(255, 255, 255, 0.9) !important;
-        font-size: 13px !important;
-    }
-    
-    [data-testid="stSidebar"] [data-testid="stMetricValue"] {
-        color: white !important;
-        font-size: 24px !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Divider in Sidebar */
-    [data-testid="stSidebar"] hr {
-        margin: 1.5rem 0;
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    /* Main Header */
-    .main-header {
-        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
-        padding: 3rem 2rem;
-        border-radius: 16px;
-        color: white;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 40px rgba(30, 64, 175, 0.2);
-    }
-    
-    .main-header h1 {
-        font-size: 2.8em;
-        font-weight: 700;
-        margin: 0;
-        line-height: 1.2;
-    }
-    
-    .main-header h3 {
-        font-size: 1.3em;
-        font-weight: 500;
-        margin: 1rem 0 0.5rem 0;
-        opacity: 0.95;
-    }
-    
-    .main-header p {
-        font-size: 1.05em;
-        opacity: 0.9;
-        margin: 0;
-    }
-    
-    /* Section Headers */
-    .section-header {
-        background: linear-gradient(90deg, #1e40af 0%, #7c3aed 100%);
-        padding: 1.2rem 2rem;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-        font-size: 1.3em;
-        margin: 2rem 0 1.5rem 0;
-        box-shadow: 0 4px 15px rgba(30, 64, 175, 0.15);
-    }
-    
-    /* KPI Metric Cards */
     .metric-card {
-        background: white;
-        padding: 2rem 1.5rem;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        border-left: 4px solid #3b82f6;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        padding: 30px 25px;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(74, 144, 226, 0.12);
+        border: 1px solid rgba(74, 144, 226, 0.1);
         text-align: center;
         transition: all 0.3s ease;
-        height: 180px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        margin-bottom: 20px;
     }
-    
     .metric-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 8px 30px rgba(74, 144, 226, 0.2);
     }
-    
     .metric-card h3 {
-        color: #1e40af;
-        font-size: 3em;
-        margin: 0.5rem 0;
+        color: #4a90e2;
+        font-size: 2.5em;
+        margin: 10px 0;
         font-weight: 700;
-        line-height: 1;
     }
-    
-    .metric-card .label {
-        color: #64748b;
-        font-size: 0.85em;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.3rem;
+    .metric-card p {
+        color: #666;
+        font-size: 1em;
+        margin: 5px 0;
+        font-weight: 500;
     }
-    
-    .metric-card .sublabel {
-        color: #94a3b8;
-        font-size: 0.8em;
-        margin-top: 0.3rem;
-    }
-    
     .metric-card .delta {
-        color: #10b981;
-        font-size: 0.85em;
+        color: #51cf66;
+        font-size: 0.9em;
         font-weight: 600;
-        margin-top: 0.3rem;
+        margin-top: 5px;
     }
-    
-    /* Feature Cards */
-    .feature-card {
-        background: white;
-        padding: 2.5rem 2rem;
-        border-radius: 16px;
+    .main-header {
+        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
+        padding: 50px 40px;
+        border-radius: 25px;
+        color: white;
         text-align: center;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        height: 320px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        border-top: 4px solid #3b82f6;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 40px rgba(74, 144, 226, 0.25);
     }
-    
-    .feature-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    .section-header {
+        background: linear-gradient(90deg, #4a90e2 0%, #7b68ee 100%);
+        padding: 20px 30px;
+        border-radius: 15px;
+        color: white;
+        margin: 25px 0;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
+        font-size: 1.3em;
     }
-    
-    .feature-card .icon {
-        font-size: 4em;
-        margin-bottom: 1.5rem;
-        line-height: 1;
-    }
-    
-    .feature-card h3 {
-        color: #1e293b;
-        margin-bottom: 1rem;
-        font-weight: 700;
-        font-size: 1.4em;
-        line-height: 1.3;
-    }
-    
-    .feature-card p {
-        color: #64748b;
-        font-size: 0.95em;
-        line-height: 1.6;
-        margin: 0;
-    }
-    
-    /* Content Containers */
-    .content-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        margin: 1.5rem 0;
-    }
-    
-    /* Buttons */
     .stButton>button {
-        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
         color: white;
         border: none;
-        padding: 0.9rem 2.5rem;
-        border-radius: 10px;
+        padding: 16px 40px;
+        border-radius: 30px;
         font-weight: 600;
         font-size: 16px;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
         width: 100%;
     }
-    
     .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(30, 64, 175, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
+        background: linear-gradient(135deg, #357abd 0%, #6a5acd 100%);
     }
-    
-    /* Risk Badges */
     .risk-badge-high {
-        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
         color: white;
-        padding: 8px 20px;
-        border-radius: 20px;
+        padding: 10px 25px;
+        border-radius: 25px;
         font-weight: 600;
         display: inline-block;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .risk-badge-low {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-        color: white;
-        padding: 8px 20px;
-        border-radius: 20px;
-        font-weight: 600;
-        display: inline-block;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    /* Diet Card */
-    .diet-card {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-        padding: 2rem;
-        border-radius: 16px;
-        margin: 1.5rem 0;
-        box-shadow: 0 4px 15px rgba(251, 191, 36, 0.15);
-        border-left: 4px solid #f59e0b;
-    }
-    
-    /* Info Box */
-    .info-box {
-        background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin: 1rem 0;
-    }
-    
-    .info-box h4 {
-        margin: 0 0 0.8rem 0;
-        font-weight: 700;
-        font-size: 1.1em;
-    }
-    
-    .info-box p {
-        margin: 0;
+        box-shadow: 0 3px 12px rgba(255, 107, 107, 0.3);
         font-size: 14px;
-        line-height: 1.6;
-        opacity: 0.95;
     }
-    
-    /* Dataframes */
-    .stDataFrame {
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-    
-    /* Expander */
-    .streamlit-expanderHeader {
-        background: #f1f5f9;
-        border-radius: 10px;
-        font-weight: 600;
-        color: #1e40af;
-    }
-    
-    /* Download Button */
-    .stDownloadButton>button {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    .risk-badge-low {
+        background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
         color: white;
-        border: none;
-        padding: 0.8rem 2rem;
-        border-radius: 10px;
+        padding: 10px 25px;
+        border-radius: 25px;
         font-weight: 600;
-        transition: all 0.3s ease;
+        display: inline-block;
+        box-shadow: 0 3px 12px rgba(81, 207, 102, 0.3);
+        font-size: 14px;
     }
-    
-    .stDownloadButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3);
-    }
-    
-    /* Footer */
-    .footer {
-        text-align: center;
-        padding: 2.5rem;
+    .content-container {
         background: white;
-        border-radius: 16px;
-        margin-top: 3rem;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(74, 144, 226, 0.1);
+        margin: 20px 0;
     }
-    
-    .footer h3 {
-        color: #1e40af;
-        margin-bottom: 1rem;
-        font-weight: 700;
+    .diet-card {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        color: #333;
+        padding: 25px;
+        border-radius: 20px;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.15);
+        border: 1px solid rgba(255, 152, 0, 0.2);
     }
-    
-    .footer p {
-        color: #64748b;
-        margin: 0.5rem 0;
+    .feature-card {
+        background: white;
+        padding: 35px 30px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(74, 144, 226, 0.1);
+        border: 1px solid rgba(74, 144, 226, 0.08);
+        transition: all 0.3s ease;
+        height: 100%;
     }
-    
-    .footer .contact {
-        margin-top: 1.5rem;
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 30px rgba(74, 144, 226, 0.18);
     }
-    
-    .footer .contact span {
-        margin: 0 1rem;
-        color: #1e40af;
-        font-weight: 500;
+    .dataframe {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
+    .streamlit-expanderHeader {
+        background: rgba(74, 144, 226, 0.08);
+        border-radius: 10px;
+        color: #4a90e2;
+        font-weight: 600;
+    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -456,7 +217,7 @@ except Exception as e:
     st.error(f"❌ Failed to initialize application: {str(e)}")
     st.stop()
 
-# ================= HELPER FUNCTIONS =================
+# ================= OPTIMIZED HELPER FUNCTIONS =================
 @st.cache_data(show_spinner=False)
 def prepare_features(df, feature_columns):
     return df.reindex(columns=feature_columns, fill_value=0)
@@ -475,269 +236,230 @@ except Exception as e:
     st.error(f"❌ Error in risk prediction: {str(e)}")
     st.stop()
 
-# Calculate metrics
+# Calculate metrics once
 total_patients = len(df_with_risk)
 high_risk = sum(df_with_risk["risk_label"] == "HIGH DIET RISK")
 low_risk = sum(df_with_risk["risk_label"] == "LOW DIET RISK")
 high_risk_pct = (high_risk / total_patients * 100) if total_patients > 0 else 0
 low_risk_pct = 100 - high_risk_pct
 
-# ================= PROFESSIONAL SIDEBAR =================
+# ================= SIDEBAR NAVIGATION =================
 with st.sidebar:
-    st.markdown("""
-    <div class="nav-header">
-        <h2 style="margin: 0; font-size: 1.5em;">🏥 AI Diet Planner</h2>
-        <p style="margin: 0.5rem 0 0 0; font-size: 0.85em; opacity: 0.9;">Smart Healthcare Solutions</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Navigation
-    page = st.radio(
-        "Navigation",
-        ["🏠 Home", "📊 Dashboard"],
-        index=0
-    )
+    st.markdown("### 🏥 Navigation Menu")
+    st.markdown("---")
+    page = st.radio("", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
     
     st.markdown("---")
-    
-    # Quick Stats
     st.markdown("### 📊 Quick Stats")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Total Patients", f"{total_patients:,}", delta=None)
-    with col2:
-        st.metric("Accuracy", "98.5%", delta=None)
-    
-    st.markdown(f"""
-    <div style='background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem;'>
-        <p style='margin: 0; font-size: 13px;'><strong>🔍 Features:</strong> {len(FEATURE_COLUMNS)}</p>
-        <p style='margin: 0.5rem 0 0 0; font-size: 13px;'><strong>🤖 Model:</strong> LightGBM</p>
-        <p style='margin: 0.5rem 0 0 0; font-size: 13px;'><strong>🔴 High Risk:</strong> {high_risk}</p>
-        <p style='margin: 0.5rem 0 0 0; font-size: 13px;'><strong>🟢 Low Risk:</strong> {low_risk}</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    st.markdown("""
-    <div style='text-align: center; margin-top: 2rem; opacity: 0.7;'>
-        <p style='font-size: 11px; margin: 0;'>Version 3.0</p>
-        <p style='font-size: 11px; margin: 0.3rem 0 0 0;'>© 2025 AI Diet Planner</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.metric("👥 Total Patients", f"{total_patients:,}")
+    st.metric("🎯 Model Accuracy", "98.5%")
+    st.markdown(f"**🔍 Features Analyzed:** {len(FEATURE_COLUMNS)}")
+    st.markdown("**🤖 Model:** LightGBM")
 
 # ================= HOME PAGE =================
 if page == "🏠 Home":
-    # Main Header
     st.markdown("""
     <div class="main-header">
-        <h1>🏥 AI-Powered Diet Planner</h1>
-        <h3>Personalized Nutrition Plans Based on Medical Intelligence</h3>
-        <p>Revolutionizing healthcare with machine learning and data-driven insights</p>
+        <h1 style="font-size: 3em; margin-bottom: 0;">🏥 AI Diet Planner</h1>
+        <h3 style="font-size: 1.5em; margin: 10px 0;">Personalized Nutrition Plans Based on Medical Intelligence</h3>
+        <p style="font-size: 1.1em; opacity: 0.95;">Revolutionizing healthcare with machine learning and personalized diet recommendations</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Feature Cards
     col1, col2, col3 = st.columns(3, gap="large")
     
     with col1:
         st.markdown("""
         <div class="feature-card">
-            <div class="icon">🤖</div>
-            <h3>AI-Powered Analysis</h3>
-            <p>Advanced machine learning algorithms analyze medical data to predict diet risks with 98.5% accuracy</p>
+            <div style="font-size: 4em; margin-bottom: 20px;">🤖</div>
+            <h3 style="color: #4a90e2; margin-bottom: 15px;">AI-Powered Analysis</h3>
+            <p style="font-size: 16px; color: #666; line-height: 1.6;">
+                Advanced machine learning algorithms analyze medical data to predict diet risks with 98.5% accuracy
+            </p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <div class="icon">🍎</div>
-            <h3>Personalized Plans</h3>
-            <p>Custom diet recommendations tailored to individual health profiles and medical conditions</p>
+            <div style="font-size: 4em; margin-bottom: 20px;">🍎</div>
+            <h3 style="color: #7b68ee; margin-bottom: 15px;">Personalized Plans</h3>
+            <p style="font-size: 16px; color: #666; line-height: 1.6;">
+                Custom diet recommendations tailored to individual health profiles and medical conditions
+            </p>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown("""
         <div class="feature-card">
-            <div class="icon">📈</div>
-            <h3>Real-time Insights</h3>
-            <p>Instant risk assessment and actionable dietary guidelines for immediate implementation</p>
+            <div style="font-size: 4em; margin-bottom: 20px;">📈</div>
+            <h3 style="color: #51cf66; margin-bottom: 15px;">Real-time Insights</h3>
+            <p style="font-size: 16px; color: #666; line-height: 1.6;">
+                Instant risk assessment and actionable dietary guidelines for immediate implementation
+            </p>
         </div>
         """, unsafe_allow_html=True)
     
-    # KPI Metrics
-    st.markdown('<div style="margin: 3rem 0 2rem 0;"></div>', unsafe_allow_html=True)
-    
+    # KPI Cards with actual data
     col1, col2, col3, col4 = st.columns(4, gap="medium")
     
     with col1:
         st.markdown(f"""
         <div class="metric-card">
-            <p class="label">👥 Total Patients</p>
+            <p>👥 Total Patients</p>
             <h3>{total_patients:,}</h3>
-            <p class="sublabel">Successfully Analyzed</p>
+            <p style="color: #999; font-size: 0.85em;">Analyzed Successfully</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown(f"""
-        <div class="metric-card" style="border-left-color: #dc2626;">
-            <p class="label">🔴 High Risk</p>
-            <h3 style="color: #dc2626;">{high_risk:,}</h3>
+        <div class="metric-card">
+            <p>🔴 High Risk</p>
+            <h3>{high_risk:,}</h3>
             <p class="delta">↑ {high_risk_pct:.1f}% of total</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown(f"""
-        <div class="metric-card" style="border-left-color: #059669;">
-            <p class="label">🟢 Low Risk</p>
-            <h3 style="color: #059669;">{low_risk:,}</h3>
+        <div class="metric-card">
+            <p>🟢 Low Risk</p>
+            <h3>{low_risk:,}</h3>
             <p class="delta">↑ {low_risk_pct:.1f}% of total</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col4:
         st.markdown("""
-        <div class="metric-card" style="border-left-color: #7c3aed;">
-            <p class="label">🎯 Model Accuracy</p>
-            <h3 style="color: #7c3aed;">98.5%</h3>
-            <p class="sublabel">High Performance</p>
+        <div class="metric-card">
+            <p>🎯 Accuracy</p>
+            <h3>98.5%</h3>
+            <p style="color: #51cf66; font-size: 0.85em; font-weight: 600;">High Performance</p>
         </div>
         """, unsafe_allow_html=True)
     
-    # Patient Data Section
     st.markdown('<div class="section-header">📂 Patient Medical Data Overview</div>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="content-container">', unsafe_allow_html=True)
-        
         col1, col2 = st.columns([3, 1])
         with col1:
             st.markdown("**Sample of patient medical records used for diet risk analysis:**")
         with col2:
-            show_all = st.checkbox("📋 Show all data", value=False)
+            show_all = st.checkbox("Show all data", value=False)
         
         display_df = infer_df if show_all else infer_df.head(10)
-        st.dataframe(display_df, width='stretch', height=350)
-        
+        st.dataframe(display_df, use_container_width=True, height=300)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Diet Plan Generation Section
     st.markdown('<div class="section-header">🔍 Generate Personalized Diet Plans</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([2, 1], gap="large")
-    
+    col1, col2 = st.columns([2, 1])
     with col1:
         if st.button("🚀 Generate Diet Plans for All Patients"):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            for i, pred in enumerate(df_with_risk["risk_label"]):
-                progress = (i + 1) / len(df_with_risk)
-                progress_bar.progress(progress)
-                status_text.text(f"🔄 Processing Patient {i+1} of {len(df_with_risk)}...")
+            with st.spinner("🧠 AI is analyzing patient data and generating personalized diet plans..."):
+                progress_bar = st.progress(0)
+                progress_text = st.empty()
                 
-                diet_key = "high_risk" if pred == "HIGH DIET RISK" else "low_risk"
-                diet_plan = diet_data[diet_key]
-                
-                risk_class = "risk-badge-high" if pred == "HIGH DIET RISK" else "risk-badge-low"
-                
-                st.markdown(f"""
-                <div class="content-container">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="color: #1e40af; margin: 0;">👤 Patient {i+1}</h3>
+                for i, pred in enumerate(df_with_risk["risk_label"]):
+                    progress_bar.progress((i + 1) / len(df_with_risk))
+                    progress_text.text(f"Processing Patient {i+1}/{len(df_with_risk)}")
+                    
+                    diet_key = "high_risk" if pred == "HIGH DIET RISK" else "low_risk"
+                    diet_plan = diet_data[diet_key]
+                    
+                    risk_class = "risk-badge-high" if pred == "HIGH DIET RISK" else "risk-badge-low"
+                    
+                    st.markdown(f"""
+                    <div class="content-container">
+                        <h3 style="color: #4a90e2;">👤 Patient {i+1}</h3>
                         <span class="{risk_class}">{pred}</span>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+                    
+                    with st.expander(f"📋 View Detailed Diet Plan for Patient {i+1}", expanded=False):
+                        st.markdown('<div class="diet-card">', unsafe_allow_html=True)
+                        st.markdown(f"### 🎯 Recommended Diet Plan - {pred}")
+                        
+                        for day, meals in diet_plan.items():
+                            st.markdown(f"#### 📅 {day}")
+                            if isinstance(meals, dict):
+                                for meal, value in meals.items():
+                                    st.markdown(f"**{meal}:** {value}")
+                            elif isinstance(meals, list):
+                                for item in meals:
+                                    st.markdown(f"• {item}")
+                            else:
+                                st.markdown(f"{meals}")
+                            st.markdown("---")
+                        st.markdown('</div>', unsafe_allow_html=True)
                 
-                with st.expander(f"📋 View Detailed Diet Plan for Patient {i+1}", expanded=False):
-                    st.markdown('<div class="diet-card">', unsafe_allow_html=True)
-                    st.markdown(f"### 🎯 Recommended Diet Plan - {pred}")
-                    
-                    for day, meals in diet_plan.items():
-                        st.markdown(f"#### 📅 {day}")
-                        if isinstance(meals, dict):
-                            for meal, value in meals.items():
-                                st.markdown(f"**{meal}:** {value}")
-                        elif isinstance(meals, list):
-                            for item in meals:
-                                st.markdown(f"• {item}")
-                        else:
-                            st.markdown(f"{meals}")
-                        st.markdown("---")
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
-            
-            status_text.text("✅ All diet plans generated successfully!")
-            time.sleep(1.5)
-            status_text.empty()
-            progress_bar.empty()
+                progress_text.text("✅ All diet plans generated successfully!")
+                time.sleep(1)
+                progress_text.empty()
+                progress_bar.empty()
     
     with col2:
         st.markdown("""
-        <div class="info-box">
-            <h4>💡 How It Works</h4>
-            <p>Our AI analyzes multiple health parameters to determine diet risk levels. Each patient receives a customized nutrition plan based on their unique medical profile.</p>
-            <br>
-            <p><strong>High-risk patients</strong> receive specialized dietary guidelines with stricter nutritional controls.</p>
+        <div class="content-container" style="background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%); color: white;">
+            <h4>💡 Pro Tip</h4>
+            <p style="font-size: 14px; line-height: 1.5;">
+                Each diet plan is customized based on the patient's risk profile and medical indicators. 
+                High-risk patients receive more restrictive dietary guidelines.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
-# ================= DASHBOARD PAGE =================
 elif page == "📊 Dashboard":
     st.markdown("""
     <div class="main-header">
-        <h1>📊 Patient Analytics Dashboard</h1>
-        <h3>Real-time Risk Monitoring & Comprehensive Insights</h3>
+        <h1 style="font-size: 3em; margin-bottom: 0;">📊 Patient Analytics Dashboard</h1>
+        <h3 style="font-size: 1.5em; margin: 10px 0;">Real-time Patient Risk Monitoring & Insights</h3>
     </div>
     """, unsafe_allow_html=True)
     
-    # KPI Cards
+    # KPI Cards with actual data
     col1, col2, col3, col4 = st.columns(4, gap="medium")
     
     with col1:
         st.markdown(f"""
         <div class="metric-card">
-            <p class="label">👥 Total Patients</p>
+            <p>👥 Total Patients</p>
             <h3>{total_patients:,}</h3>
-            <p class="sublabel">Analyzed</p>
+            <p style="color: #999; font-size: 0.85em;">Total analyzed</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown(f"""
-        <div class="metric-card" style="border-left-color: #dc2626;">
-            <p class="label">🔴 High Risk</p>
-            <h3 style="color: #dc2626;">{high_risk:,}</h3>
-            <p class="delta">{high_risk_pct:.1f}% of total</p>
+        <div class="metric-card">
+            <p>🔴 High Risk</p>
+            <h3>{high_risk:,}</h3>
+            <p class="delta">↑ {high_risk_pct:.1f}% of total</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown(f"""
-        <div class="metric-card" style="border-left-color: #059669;">
-            <p class="label">🟢 Low Risk</p>
-            <h3 style="color: #059669;">{low_risk:,}</h3>
-            <p class="delta">{low_risk_pct:.1f}% of total</p>
+        <div class="metric-card">
+            <p>🟢 Low Risk</p>
+            <h3>{low_risk:,}</h3>
+            <p class="delta">↑ {low_risk_pct:.1f}% of total</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col4:
         st.markdown("""
-        <div class="metric-card" style="border-left-color: #7c3aed;">
-            <p class="label">⚡ Processing</p>
-            <h3 style="color: #7c3aed;">< 1s</h3>
-            <p class="sublabel">Per patient</p>
+        <div class="metric-card">
+            <p>⚡ Processing Speed</p>
+            <h3>< 1s</h3>
+            <p style="color: #999; font-size: 0.85em;">Per patient</p>
         </div>
         """, unsafe_allow_html=True)
     
-    # Visualizations
-    st.markdown('<div class="section-header">📈 Risk Distribution Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📈 Advanced Risk Analytics & Visualizations</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2, gap="large")
     
@@ -749,34 +471,22 @@ elif page == "📊 Dashboard":
             labels=risk_counts["Risk Level"],
             values=risk_counts["Patient Count"],
             marker=dict(
-                colors=['#dc2626', '#059669'],
+                colors=['#ff6b6b', '#51cf66'],
                 line=dict(color='white', width=3)
             ),
             hole=0.5,
             textinfo='label+percent+value',
-            textfont=dict(size=14, color='white', family='Inter'),
+            textfont=dict(size=16, color='white'),
             hovertemplate='<b>%{label}</b><br>Patients: %{value}<br>Percentage: %{percent}<extra></extra>'
         )])
         
         fig_pie.update_layout(
-            title={
-                'text': "<b>Risk Distribution Overview</b>",
-                'x': 0.5,
-                'font': {'size': 18, 'color': '#1e293b', 'family': 'Inter'}
-            },
+            title_text="<b>Risk Distribution Overview</b>",
+            title_x=0.5,
             showlegend=True,
-            legend={
-                'orientation': "h",
-                'yanchor': "bottom",
-                'y': -0.15,
-                'xanchor': "center",
-                'x': 0.5,
-                'font': {'size': 12}
-            },
-            paper_bgcolor='white',
-            plot_bgcolor='white',
-            height=400,
-            margin={'t': 60, 'b': 60, 'l': 40, 'r': 40}
+            paper_bgcolor='rgba(255,255,255,0.95)',
+            plot_bgcolor='rgba(255,255,255,0.95)',
+            height=400
         )
         
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -786,70 +496,45 @@ elif page == "📊 Dashboard":
             go.Bar(
                 x=risk_counts["Risk Level"],
                 y=risk_counts["Patient Count"],
-                marker=dict(
-                    color=['#dc2626', '#059669'],
-                    line=dict(color='white', width=2)
-                ),
+                marker_color=['#ff6b6b', '#51cf66'],
+                marker_line_color='white',
+                marker_line_width=2,
+                marker_opacity=0.85,
                 text=risk_counts["Patient Count"],
                 textposition='outside',
-                textfont=dict(size=14, color='#1e293b', family='Inter'),
+                textfont=dict(size=16, color='#333'),
                 hovertemplate='<b>%{x}</b><br>Patient Count: %{y}<extra></extra>'
             )
         ])
         
         fig_bar.update_layout(
-            title={
-                'text': "<b>Patient Risk Comparison</b>",
-                'x': 0.5,
-                'font': {'size': 18, 'color': '#1e293b', 'family': 'Inter'}
-            },
-            xaxis={
-                'title': "Risk Level",
-                'titlefont': {'size': 14, 'color': '#64748b'},
-                'tickfont': {'size': 12, 'color': '#64748b'}
-            },
-            yaxis={
-                'title': "Number of Patients",
-                'titlefont': {'size': 14, 'color': '#64748b'},
-                'tickfont': {'size': 12, 'color': '#64748b'}
-            },
-            paper_bgcolor='white',
-            plot_bgcolor='white',
-            height=400,
-            margin={'t': 60, 'b': 60, 'l': 60, 'r': 40}
+            title_text="<b>Patient Risk Comparison</b>",
+            title_x=0.5,
+            xaxis_title="Risk Level",
+            yaxis_title="Number of Patients",
+            paper_bgcolor='rgba(255,255,255,0.95)',
+            plot_bgcolor='rgba(255,255,255,0.95)',
+            height=400
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
     
-    # Patient Data Table
     st.markdown('<div class="section-header">📋 Detailed Patient Risk Analysis</div>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="content-container">', unsafe_allow_html=True)
         
-        col1, col2, col3 = st.columns([2, 2, 1])
-        
+        col1, col2 = st.columns(2)
         with col1:
             risk_filter = st.multiselect(
                 "🔍 Filter by Risk Level:",
-                options=df_with_risk["risk_label"].unique().tolist(),
-                default=df_with_risk["risk_label"].unique().tolist()
+                options=df_with_risk["risk_label"].unique(),
+                default=df_with_risk["risk_label"].unique()
             )
-        
-        with col2:
-            st.markdown(f"""
-            <div style='padding: 0.5rem 0;'>
-                <p style='margin: 0; color: #64748b; font-size: 13px;'>
-                    Showing <strong>{len(df_with_risk[df_with_risk["risk_label"].isin(risk_filter)])}</strong> of <strong>{total_patients}</strong> patients
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
         
         filtered_df = df_with_risk[df_with_risk["risk_label"].isin(risk_filter)]
         
-        st.dataframe(filtered_df, width='stretch', height=450)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.dataframe(filtered_df, use_container_width=True, height=400)
         
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
@@ -857,27 +542,26 @@ elif page == "📊 Dashboard":
             st.download_button(
                 label="📥 Download Patient Data (CSV)",
                 data=csv,
-                file_name=f"patient_risk_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                file_name=f"patient_risk_data_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
                 use_container_width=True
             )
         
         st.markdown('</div>', unsafe_allow_html=True)
 
-# ================= FOOTER =================
 st.markdown("---")
 st.markdown("""
-<div class="footer">
-    <h3>🏥 AI Diet Planner</h3>
-    <p style="font-size: 15px; color: #64748b;">
-        Powered by Advanced Machine Learning | Built with Streamlit
+<div style="text-align: center; padding: 30px; background: rgba(255, 255, 255, 0.9); border-radius: 15px; margin-top: 30px;">
+    <h3 style="color: #4a90e2; margin-bottom: 15px;">🏥 AI Diet Planner</h3>
+    <p style="color: #666; font-size: 16px; margin-bottom: 10px;">
+        © 2025 AI Diet Planner | Powered by Machine Learning | Built with Streamlit
     </p>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: 0.5rem;">
-        Version 3.0 | Last Updated: January 2025 | Model Accuracy: 98.5%
+    <p style="color: #999; font-size: 14px;">
+        Version 3.0 | Last Updated: January 2025 | Accuracy: 98.5%
     </p>
-    <div class="contact">
-        <span>📧 support@aidietplanner.com</span>
-        <span>🌐 www.aidietplanner.com</span>
+    <div style="margin-top: 20px;">
+        <span style="color: #4a90e2; margin: 0 10px;">📧 support@aidietplanner.com</span>
+        <span style="color: #7b68ee; margin: 0 10px;">🌐 www.aidietplanner.com</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
