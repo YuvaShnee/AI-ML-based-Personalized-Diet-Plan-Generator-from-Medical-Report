@@ -25,3 +25,9 @@ scikit-learn
 xgboost
 plotly
 reportlab
+scikit-learn==1.7.2
+streamlit
+pandas
+joblib
+plotly
+lightgbm
