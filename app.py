@@ -352,8 +352,8 @@ if page == "🏠 Home":
             show_all = st.checkbox("Show all data", value=False)
         
         display_df = infer_df if show_all else infer_df.head(10)
-        # FIXED: Replaced use_container_width with width parameter
-        st.dataframe(display_df, width=None, height=300)
+        # FIXED: Replaced use_container_width with width='stretch'
+        st.dataframe(display_df, width='stretch', height=300)
         st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('<div class="section-header">🔍 Generate Personalized Diet Plans</div>', unsafe_allow_html=True)
@@ -538,8 +538,8 @@ elif page == "📊 Dashboard":
         
         filtered_df = df_with_risk[df_with_risk["risk_label"].isin(risk_filter)]
         
-        # FIXED: Replaced use_container_width with width parameter
-        st.dataframe(filtered_df, width=None, height=400)
+        # FIXED: Replaced use_container_width with width='stretch'
+        st.dataframe(filtered_df, width='stretch', height=400)
         
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
