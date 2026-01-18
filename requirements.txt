@@ -10,7 +10,7 @@ joblib
 lightgbm
 scikit-learn
 reportlab
-streamlit
+
 pandas
 joblib
 lightgbm
