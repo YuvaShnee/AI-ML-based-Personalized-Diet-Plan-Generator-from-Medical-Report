@@ -29,12 +29,40 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
         border-right: 2px solid #e8efff;
+        min-width: 250px !important;
+    }
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        min-width: 250px !important;
+        max-width: 350px !important;
+    }
+    [data-testid="stSidebar"] > div:first-child {
+        width: 250px !important;
     }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
         color: #4a90e2 !important;
     }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
         color: #333 !important;
+    }
+    /* Make radio buttons more visible */
+    [data-testid="stSidebar"] .stRadio > label {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #4a90e2 !important;
+    }
+    [data-testid="stSidebar"] .stRadio > div {
+        gap: 10px;
+    }
+    [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"] {
+        background-color: rgba(74, 144, 226, 0.05);
+        padding: 10px 15px;
+        border-radius: 10px;
+        margin: 5px 0;
+        transition: all 0.3s ease;
+    }
+    [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"]:hover {
+        background-color: rgba(74, 144, 226, 0.15);
+        transform: translateX(5px);
     }
     .metric-card {
         background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
@@ -166,9 +194,6 @@ st.markdown("""
         color: #4a90e2;
         font-weight: 600;
     }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -245,10 +270,15 @@ low_risk_pct = 100 - high_risk_pct
 
 # ================= SIDEBAR NAVIGATION =================
 with st.sidebar:
-    st.markdown("### 🏥 Navigation Menu")
+    st.markdown("# 🏥 Navigation")
     st.markdown("---")
-    # FIXED: Added proper label and used label_visibility parameter correctly
-    page = st.radio("Select Page", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
+    
+    # Navigation with visible label
+    page = st.radio(
+        "Choose a page:",
+        ["🏠 Home", "📊 Dashboard"],
+        index=0
+    )
     
     st.markdown("---")
     st.markdown("### 📊 Quick Stats")
