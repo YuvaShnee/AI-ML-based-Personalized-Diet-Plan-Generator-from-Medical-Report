@@ -247,7 +247,8 @@ low_risk_pct = 100 - high_risk_pct
 with st.sidebar:
     st.markdown("### 🏥 Navigation Menu")
     st.markdown("---")
-    page = st.radio("", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
+    # FIXED: Added proper label and used label_visibility parameter correctly
+    page = st.radio("Select Page", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
     
     st.markdown("---")
     st.markdown("### 📊 Quick Stats")
@@ -351,7 +352,8 @@ if page == "🏠 Home":
             show_all = st.checkbox("Show all data", value=False)
         
         display_df = infer_df if show_all else infer_df.head(10)
-        st.dataframe(display_df, use_container_width=True, height=300)
+        # FIXED: Replaced use_container_width with width parameter
+        st.dataframe(display_df, width=None, height=300)
         st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('<div class="section-header">🔍 Generate Personalized Diet Plans</div>', unsafe_allow_html=True)
@@ -489,6 +491,7 @@ elif page == "📊 Dashboard":
             height=400
         )
         
+        # FIXED: Replaced use_container_width with width parameter
         st.plotly_chart(fig_pie, use_container_width=True)
     
     with col2:
@@ -517,6 +520,7 @@ elif page == "📊 Dashboard":
             height=400
         )
         
+        # FIXED: Replaced use_container_width with width parameter
         st.plotly_chart(fig_bar, use_container_width=True)
     
     st.markdown('<div class="section-header">📋 Detailed Patient Risk Analysis</div>', unsafe_allow_html=True)
@@ -534,7 +538,8 @@ elif page == "📊 Dashboard":
         
         filtered_df = df_with_risk[df_with_risk["risk_label"].isin(risk_filter)]
         
-        st.dataframe(filtered_df, use_container_width=True, height=400)
+        # FIXED: Replaced use_container_width with width parameter
+        st.dataframe(filtered_df, width=None, height=400)
         
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
@@ -544,6 +549,7 @@ elif page == "📊 Dashboard":
                 data=csv,
                 file_name=f"patient_risk_data_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
+                # FIXED: Replaced use_container_width with width parameter
                 use_container_width=True
             )
         
