@@ -19,7 +19,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     .stApp {
-        background: linear-gradient(135deg, #f0f4ff 0%, #fef5ff 50%, #fff9f0 100%);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         min-height: 100vh;
     }
     .block-container {
@@ -27,8 +27,8 @@ st.markdown("""
         padding-bottom: 1rem;
     }
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-        border-right: 2px solid #e8efff;
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+        border-right: 2px solid #dee2e6;
     }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
         color: #4a90e2 !important;
@@ -37,7 +37,7 @@ st.markdown("""
         color: #333 !important;
     }
     .metric-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        background: #ffffff;
         padding: 30px 25px;
         border-radius: 20px;
         box-shadow: 0 4px 20px rgba(74, 144, 226, 0.12);
