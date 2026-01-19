@@ -12,67 +12,67 @@ st.set_page_config(
     page_title="AI Diet Planner | Smart Healthcare",
     layout="wide",
     page_icon="🏥",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded"  # This ensures sidebar is always expanded
 )
 
-# ================= CUSTOM CSS WITH FIXED SIDEBAR =================
+# ================= CUSTOM CSS =================
 st.markdown("""
 <style>
-    /* Force sidebar to always be visible */
+    /* Force sidebar to always be visible and expanded */
     [data-testid="stSidebar"] {
-        display: block !important;
-        visibility: visible !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+        width: 280px !important;
+        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+        border-right: 2px solid #e8efff;
+        position: relative !important;
+        transform: translateX(0) !important;
+    }
+    
+    [data-testid="stSidebar"][aria-expanded="true"] {
         min-width: 280px !important;
         max-width: 280px !important;
     }
     
     [data-testid="stSidebar"][aria-expanded="false"] {
-        margin-left: 0px !important;
-        transform: none !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+        margin-left: 0 !important;
     }
     
-    [data-testid="stSidebar"][aria-expanded="true"] {
-        margin-left: 0px !important;
+    /* Ensure sidebar content is always visible */
+    [data-testid="stSidebarContent"] {
+        width: 100% !important;
+        padding: 1rem !important;
     }
     
-    /* Hide collapse button if you want sidebar always visible */
-    [data-testid="collapsedControl"] {
+    /* Hide the collapse button to prevent users from minimizing */
+    button[kind="header"] {
         display: none !important;
     }
     
-    /* Main app background */
     .stApp {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background: linear-gradient(135deg, #f0f4ff 0%, #fef5ff 50%, #fff9f0 100%);
         min-height: 100vh;
     }
     
     .block-container {
         padding-top: 1rem;
         padding-bottom: 1rem;
-        max-width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
     }
     
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
-        border-right: 2px solid #dee2e6;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-    }
-    
-    [data-testid="stSidebar"] h1, 
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3 {
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
         color: #4a90e2 !important;
     }
     
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] label {
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
         color: #333 !important;
     }
     
-    /* Metric cards */
     .metric-card {
-        background: #ffffff;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
         padding: 30px 25px;
         border-radius: 20px;
         box-shadow: 0 4px 20px rgba(74, 144, 226, 0.12);
@@ -108,7 +108,6 @@ st.markdown("""
         margin-top: 5px;
     }
     
-    /* Headers */
     .main-header {
         background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
         padding: 50px 40px;
@@ -130,7 +129,6 @@ st.markdown("""
         font-size: 1.3em;
     }
     
-    /* Buttons */
     .stButton>button {
         background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
         color: white;
@@ -150,7 +148,6 @@ st.markdown("""
         background: linear-gradient(135deg, #357abd 0%, #6a5acd 100%);
     }
     
-    /* Risk badges */
     .risk-badge-high {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
         color: white;
@@ -173,7 +170,6 @@ st.markdown("""
         font-size: 14px;
     }
     
-    /* Content containers */
     .content-container {
         background: white;
         padding: 30px;
@@ -193,7 +189,6 @@ st.markdown("""
         border: 1px solid rgba(255, 152, 0, 0.2);
     }
     
-    /* Feature cards */
     .feature-card {
         background: white;
         padding: 35px 30px;
@@ -210,14 +205,12 @@ st.markdown("""
         box-shadow: 0 8px 30px rgba(74, 144, 226, 0.18);
     }
     
-    /* Dataframes */
     .dataframe {
         border-radius: 15px;
         overflow: hidden;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
     
-    /* Expanders */
     .streamlit-expanderHeader {
         background: rgba(74, 144, 226, 0.08);
         border-radius: 10px;
@@ -225,26 +218,29 @@ st.markdown("""
         font-weight: 600;
     }
     
-    /* Hide Streamlit branding */
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+        [data-testid="stSidebar"] {
+            min-width: 260px !important;
+            max-width: 260px !important;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        [data-testid="stSidebar"] {
+            min-width: 240px !important;
+            max-width: 240px !important;
+        }
+        
+        .block-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
+    
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
-    /* Responsive design */
-    @media (max-width: 768px) {
-        [data-testid="stSidebar"] {
-            min-width: 250px !important;
-            max-width: 250px !important;
-        }
-        
-        .metric-card h3 {
-            font-size: 2em;
-        }
-        
-        .main-header {
-            padding: 30px 20px;
-        }
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -319,18 +315,11 @@ low_risk = sum(df_with_risk["risk_label"] == "LOW DIET RISK")
 high_risk_pct = (high_risk / total_patients * 100) if total_patients > 0 else 0
 low_risk_pct = 100 - high_risk_pct
 
-# ================= SIDEBAR NAVIGATION (ALWAYS VISIBLE) =================
+# ================= SIDEBAR NAVIGATION =================
 with st.sidebar:
-    st.markdown("# 🏥 AI Diet Planner")
-    st.markdown("### Navigation Menu")
+    st.markdown("### 🏥 Navigation Menu")
     st.markdown("---")
-    
-    # Radio buttons for navigation
-    page = st.radio(
-        "Select Page",
-        ["🏠 Home", "📊 Dashboard"],
-        label_visibility="visible"
-    )
+    page = st.radio("", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
     
     st.markdown("---")
     st.markdown("### 📊 Quick Stats")
@@ -338,13 +327,6 @@ with st.sidebar:
     st.metric("🎯 Model Accuracy", "98.5%")
     st.markdown(f"**🔍 Features Analyzed:** {len(FEATURE_COLUMNS)}")
     st.markdown("**🤖 Model:** LightGBM")
-    
-    st.markdown("---")
-    st.markdown("### ℹ️ About")
-    st.info("""
-    This AI-powered system analyzes patient medical data to predict diet risks 
-    and generate personalized nutrition plans.
-    """)
 
 # ================= HOME PAGE =================
 if page == "🏠 Home":
