@@ -20,53 +20,15 @@ st.set_page_config(
 # Custom CSS for modern, colorful design
 st.markdown("""
 <style>
-    /* Main background gradient */
     .stApp {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
     
-    /* Card styling */
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
     }
     
-    /* Custom cards */
-    .custom-card {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-        border-left: 5px solid #667eea;
-    }
-    
-    .metric-card {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    .success-card {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    .warning-card {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    /* Header styling */
     h1 {
         color: white !important;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
@@ -91,7 +53,6 @@ st.markdown("""
         font-weight: 600 !important;
     }
     
-    /* Sidebar styling */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
     }
@@ -100,7 +61,6 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Button styling */
     .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -117,7 +77,6 @@ st.markdown("""
         box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
     }
     
-    /* Download button styling */
     .stDownloadButton > button {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
@@ -128,14 +87,12 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
     }
     
-    /* Metric styling */
     [data-testid="stMetricValue"] {
         font-size: 2rem;
         font-weight: 700;
         color: #667eea;
     }
     
-    /* File uploader */
     [data-testid="stFileUploader"] {
         background: white;
         border-radius: 15px;
@@ -143,13 +100,11 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
-    /* Info boxes */
     .stAlert {
         border-radius: 12px;
         border-left: 5px solid #4facfe;
     }
     
-    /* Expander */
     .streamlit-expanderHeader {
         background: white;
         border-radius: 10px;
@@ -157,43 +112,10 @@ st.markdown("""
         color: #667eea;
     }
     
-    /* Progress bar */
     .stProgress > div > div {
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     }
     
-    /* Text input */
-    .stTextInput > div > div > input {
-        border-radius: 10px;
-        border: 2px solid #e0e0e0;
-    }
-    
-    /* Custom badge */
-    .badge {
-        display: inline-block;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin: 5px;
-    }
-    
-    .badge-success {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
-    }
-    
-    .badge-warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-    }
-    
-    .badge-info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-    }
-    
-    /* Divider */
     hr {
         border: none;
         height: 2px;
@@ -203,7 +125,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Extract text from PDF
 def extract_text_from_pdf(pdf_file):
     try:
         pdf_reader = PyPDF2.PdfReader(pdf_file)
@@ -215,11 +136,8 @@ def extract_text_from_pdf(pdf_file):
         st.error(f"Error reading PDF: {str(e)}")
         return None
 
-# Extract health metrics using regex patterns
 def extract_health_metrics(text):
     metrics = {}
-    
-    # Common patterns for health metrics
     patterns = {
         'bmi': r'BMI[:\s]+(\d+\.?\d*)',
         'cholesterol': r'(?:Total\s+)?Cholesterol[:\s]+(\d+)',
@@ -240,7 +158,6 @@ def extract_health_metrics(text):
     
     return metrics
 
-# Determine health status based on values
 def get_health_status(metric, value):
     try:
         val = float(value) if '/' not in str(value) else value
@@ -267,13 +184,10 @@ def get_health_status(metric, value):
     
     return "Normal"
 
-# Generate diet plan based on health conditions
 def generate_diet_plan(metrics, diagnoses):
     has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
     has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
-    has_high_cholesterol = metrics.get('cholesterol_status') == 'High'
     
-    # Base meal plan
     meal_plan = {
         'breakfast': [
             "Oatmeal with berries and chia seeds",
@@ -297,7 +211,6 @@ def generate_diet_plan(metrics, diagnoses):
         ]
     }
     
-    # Customize based on conditions
     if has_diabetes:
         meal_plan['breakfast'].append("Sugar-free protein smoothie")
         meal_plan['snacks'].append("Celery with almond butter")
@@ -308,7 +221,6 @@ def generate_diet_plan(metrics, diagnoses):
     
     return meal_plan
 
-# Generate nutrition guidelines
 def generate_nutrition_guidelines(diagnoses):
     has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
     has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
@@ -352,7 +264,6 @@ def generate_nutrition_guidelines(diagnoses):
     
     return base_guidelines
 
-# Generate lifestyle recommendations
 def generate_lifestyle_recommendations(diagnoses):
     has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
     has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
@@ -380,12 +291,9 @@ def generate_lifestyle_recommendations(diagnoses):
     
     return recommendations
 
-# Analyze medical report
 def analyze_medical_report(report_text):
-    # Extract metrics
     raw_metrics = extract_health_metrics(report_text)
     
-    # Build structured health metrics
     health_metrics = {}
     units = {
         'bmi': 'kg/m²',
@@ -407,7 +315,6 @@ def analyze_medical_report(report_text):
                 'unit': units[metric]
             }
     
-    # Extract patient info (basic extraction)
     name_match = re.search(r'(?:Name|Patient)[:\s]+([A-Za-z\s]+)', report_text, re.IGNORECASE)
     age_match = re.search(r'Age[:\s]+(\d+)', report_text, re.IGNORECASE)
     gender_match = re.search(r'(?:Gender|Sex)[:\s]+(Male|Female)', report_text, re.IGNORECASE)
@@ -418,7 +325,6 @@ def analyze_medical_report(report_text):
         'gender': gender_match.group(1) if gender_match else "Unknown"
     }
     
-    # Determine diagnoses based on metrics
     diagnoses = []
     if health_metrics.get('blood_sugar', {}).get('status') == 'High':
         diagnoses.append("Elevated Blood Sugar / Pre-diabetes Risk")
@@ -433,7 +339,6 @@ def analyze_medical_report(report_text):
     if not diagnoses:
         diagnoses = ["No significant conditions detected"]
     
-    # Generate recommendations
     meal_plan = generate_diet_plan(health_metrics, diagnoses)
     nutrition_guidelines = generate_nutrition_guidelines(diagnoses)
     lifestyle_recommendations = generate_lifestyle_recommendations(diagnoses)
@@ -447,7 +352,6 @@ def analyze_medical_report(report_text):
         'lifestyle_recommendations': lifestyle_recommendations
     }
 
-# Display health metrics with color coding
 def display_health_metrics(metrics):
     st.markdown("### 🩺 Health Status Assessment")
     st.markdown("")
@@ -460,13 +364,13 @@ def display_health_metrics(metrics):
         status = data.get("status", "Normal")
         if status == "High":
             emoji = "🔴"
-            badge_class = "badge-warning"
+            badge_color = "#f5576c"
         elif status == "Low":
             emoji = "🟡"
-            badge_class = "badge-warning"
+            badge_color = "#fee140"
         else:
             emoji = "🟢"
-            badge_class = "badge-success"
+            badge_color = "#38ef7d"
         
         with col:
             st.markdown(f"""
@@ -481,18 +385,18 @@ def display_health_metrics(metrics):
                     {data.get('value', 'N/A')}
                 </div>
                 <div style='color: #888; font-size: 0.85rem;'>{data.get('unit', '')}</div>
-                <div class='badge {badge_class}' style='margin-top: 10px;'>{status}</div>
+                <div style='background: {badge_color}; color: white; padding: 5px 15px; 
+                            border-radius: 20px; display: inline-block; margin-top: 10px; 
+                            font-weight: 600; font-size: 0.85rem;'>{status}</div>
             </div>
             """, unsafe_allow_html=True)
 
-# Generate PDF report
 def generate_pdf_report(data):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     story = []
     styles = getSampleStyleSheet()
     
-    # Title
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
@@ -503,14 +407,12 @@ def generate_pdf_report(data):
     story.append(Paragraph("Medical Diet Plan Report", title_style))
     story.append(Spacer(1, 0.2*inch))
     
-    # Patient Info
     story.append(Paragraph("<b>Patient Information</b>", styles['Heading2']))
     patient = data['patient_info']
     story.append(Paragraph(f"Name: {patient['name']}", styles['Normal']))
     story.append(Paragraph(f"Age: {patient['age']} | Gender: {patient['gender']}", styles['Normal']))
     story.append(Spacer(1, 0.2*inch))
     
-    # Health Metrics
     story.append(Paragraph("<b>Health Metrics</b>", styles['Heading2']))
     for key, val in data['health_metrics'].items():
         story.append(Paragraph(
@@ -519,13 +421,11 @@ def generate_pdf_report(data):
         ))
     story.append(Spacer(1, 0.2*inch))
     
-    # Diagnoses
     story.append(Paragraph("<b>Diagnoses</b>", styles['Heading2']))
     for diag in data['diagnoses']:
         story.append(Paragraph(f"• {diag}", styles['Normal']))
     story.append(Spacer(1, 0.2*inch))
     
-    # Meal Plan
     story.append(Paragraph("<b>Personalized Meal Plan</b>", styles['Heading2']))
     for meal, items in data['meal_plan'].items():
         story.append(Paragraph(f"<b>{meal.upper()}:</b>", styles['Normal']))
@@ -533,7 +433,6 @@ def generate_pdf_report(data):
             story.append(Paragraph(f"  • {item}", styles['Normal']))
         story.append(Spacer(1, 0.1*inch))
     
-    # Nutrition Guidelines
     story.append(Spacer(1, 0.2*inch))
     story.append(Paragraph("<b>Daily Nutrition Targets</b>", styles['Heading2']))
     nutrition = data['nutrition_guidelines']
@@ -545,9 +444,7 @@ def generate_pdf_report(data):
     buffer.seek(0)
     return buffer
 
-# Main app
 def main():
-    # Hero Section
     st.markdown("""
     <div style='text-align: center; padding: 2rem 0;'>
         <h1 style='font-size: 3.5rem; margin-bottom: 0;'>🏥 AI Medical Diet Planner</h1>
@@ -559,7 +456,6 @@ def main():
     
     st.markdown("<hr>", unsafe_allow_html=True)
     
-    # Sidebar
     with st.sidebar:
         st.markdown("""
         <div style='text-align: center; padding: 1rem 0;'>
@@ -567,45 +463,23 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
-            <div style='margin: 15px 0;'>
-                <div style='font-size: 2rem; margin-bottom: 5px;'>📤</div>
-                <div style='font-weight: 600; font-size: 1.1rem;'>Upload Report</div>
-                <div style='font-size: 0.9rem; opacity: 0.9;'>Upload your medical PDF</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        steps = [
+            ("📤", "Upload Report", "Upload your medical PDF"),
+            ("🔍", "AI Analysis", "Extract health metrics"),
+            ("🍽️", "Get Diet Plan", "Personalized recommendations"),
+            ("📥", "Download", "Save your custom report")
+        ]
         
-        st.markdown("""
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
-            <div style='margin: 15px 0;'>
-                <div style='font-size: 2rem; margin-bottom: 5px;'>🔍</div>
-                <div style='font-weight: 600; font-size: 1.1rem;'>AI Analysis</div>
-                <div style='font-size: 0.9rem; opacity: 0.9;'>Extract health metrics</div>
+        for emoji, title, desc in steps:
+            st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
+                <div style='margin: 15px 0;'>
+                    <div style='font-size: 2rem; margin-bottom: 5px;'>{emoji}</div>
+                    <div style='font-weight: 600; font-size: 1.1rem;'>{title}</div>
+                    <div style='font-size: 0.9rem; opacity: 0.9;'>{desc}</div>
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
-            <div style='margin: 15px 0;'>
-                <div style='font-size: 2rem; margin-bottom: 5px;'>🍽️</div>
-                <div style='font-weight: 600; font-size: 1.1rem;'>Get Diet Plan</div>
-                <div style='font-size: 0.9rem; opacity: 0.9;'>Personalized recommendations</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
-            <div style='margin: 15px 0;'>
-                <div style='font-size: 2rem; margin-bottom: 5px;'>📥</div>
-                <div style='font-weight: 600; font-size: 1.1rem;'>Download</div>
-                <div style='font-size: 0.9rem; opacity: 0.9;'>Save your custom report</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
         
         st.markdown("<hr style='border-color: rgba(255,255,255,0.3);'>", unsafe_allow_html=True)
         
@@ -625,7 +499,6 @@ def main():
         </div>
         """, unsafe_allow_html=True)
     
-    # File upload section
     st.markdown("""
     <div style='background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 20px 0;'>
         <h3 style='color: #667eea; text-align: center; margin-bottom: 20px;'>📄 Upload Your Medical Report</h3>
@@ -672,17 +545,94 @@ def main():
                         
                         st.markdown("<hr>", unsafe_allow_html=True)
                         
-                        # Patient Information
                         st.markdown("""
                         <div style='background: white; padding: 25px; border-radius: 15px; 
                                     box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 20px 0;'>
                             <h2 style='color: #667eea; margin-bottom: 20px;'>👤 Patient Information</h2>
+                        </div>
                         """, unsafe_allow_html=True)
                         
                         col1, col2, col3 = st.columns(3)
+                        patient = analysis['patient_info']
+                        
                         with col1:
                             st.markdown(f"""
-                            <div style='text-align: center; padding: 15px;'>
+                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                        padding: 20px; border-radius: 12px; text-align: center; color: white;
+                                        box-shadow: 0 4px 12px rgba(102,126,234,0.3);'>
                                 <div style='font-size: 2.5rem;'>👨‍⚕️</div>
-                                <div style='color: #888; font-size: 0.9rem; margin-top: 8px;'>Name</div>
-                                <div style='font-size: 1.3rem; font-weight: 700; color: #333;'
+                                <div style='font-size: 0.9rem; margin-top: 8px; opacity: 0.9;'>Name</div>
+                                <div style='font-size: 1.3rem; font-weight: 700; margin-top: 5px;'>{patient['name']}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col2:
+                            st.markdown(f"""
+                            <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+                                        padding: 20px; border-radius: 12px; text-align: center; color: white;
+                                        box-shadow: 0 4px 12px rgba(240,147,251,0.3);'>
+                                <div style='font-size: 2.5rem;'>🎂</div>
+                                <div style='font-size: 0.9rem; margin-top: 8px; opacity: 0.9;'>Age</div>
+                                <div style='font-size: 1.3rem; font-weight: 700; margin-top: 5px;'>{patient['age']}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col3:
+                            gender_emoji = "👨" if patient['gender'] == "Male" else "👩"
+                            st.markdown(f"""
+                            <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                                        padding: 20px; border-radius: 12px; text-align: center; color: white;
+                                        box-shadow: 0 4px 12px rgba(79,172,254,0.3);'>
+                                <div style='font-size: 2.5rem;'>{gender_emoji}</div>
+                                <div style='font-size: 0.9rem; margin-top: 8px; opacity: 0.9;'>Gender</div>
+                                <div style='font-size: 1.3rem; font-weight: 700; margin-top: 5px;'>{patient['gender']}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.markdown("<hr>", unsafe_allow_html=True)
+                        
+                        if analysis['health_metrics']:
+                            st.markdown("""
+                            <div style='background: white; padding: 25px; border-radius: 15px; 
+                                        box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 20px 0;'>
+                            """, unsafe_allow_html=True)
+                            display_health_metrics(analysis['health_metrics'])
+                            st.markdown("</div>", unsafe_allow_html=True)
+                        else:
+                            st.warning("⚠️ No health metrics detected in the report.")
+                        
+                        st.markdown("<hr>", unsafe_allow_html=True)
+                        
+                        st.markdown("""
+                        <div style='background: white; padding: 25px; border-radius: 15px; 
+                                    box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 20px 0;'>
+                            <h2 style='color: #667eea; margin-bottom: 20px;'>🏥 Health Assessment</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        for diag in analysis['diagnoses']:
+                            if "No significant" in diag:
+                                st.markdown(f"""
+                                <div style='background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); 
+                                            padding: 15px 20px; border-radius: 10px; color: white; 
+                                            margin: 10px 0; font-weight: 600;'>
+                                    ✅ {diag}
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"""
+                                <div style='background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); 
+                                            padding: 15px 20px; border-radius: 10px; color: white; 
+                                            margin: 10px 0; font-weight: 600;'>
+                                    ⚠️ {diag}
+                                </div>
+                                """, unsafe_allow_html=True)
+                        
+                        st.markdown("<hr>", unsafe_allow_html=True)
+                        
+                        st.markdown("""
+                        <div style='background: white; padding: 25px; border-radius: 15px; 
+                                    box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 20px 0;'>
+                            <h2 style='color: #667eea; margin-bottom: 20px;'>🍽️ Personalized Meal Plan</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
