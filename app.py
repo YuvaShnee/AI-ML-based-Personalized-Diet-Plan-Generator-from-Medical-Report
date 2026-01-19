@@ -27,8 +27,8 @@ st.markdown("""
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 1rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
         max-width: 100% !important;
     }
     
@@ -36,104 +36,115 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
         border-right: 2px solid #e8efff;
-        min-width: 250px !important;
+        min-width: 200px !important;
     }
     
     [data-testid="stSidebar"] h1, 
     [data-testid="stSidebar"] h2, 
     [data-testid="stSidebar"] h3 {
         color: #4a90e2 !important;
-        font-size: 1.2em !important;
+        font-size: 1.1em !important;
     }
     
     [data-testid="stSidebar"] p, 
     [data-testid="stSidebar"] label {
         color: #333 !important;
-        font-size: 0.9em !important;
+        font-size: 0.85em !important;
     }
     
     /* Compact metric cards for small screens */
     .metric-card {
         background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-        padding: 20px 15px;
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(74, 144, 226, 0.12);
+        padding: 12px 10px;
+        border-radius: 12px;
+        box-shadow: 0 3px 15px rgba(74, 144, 226, 0.12);
         border: 1px solid rgba(74, 144, 226, 0.1);
         text-align: center;
         transition: all 0.3s ease;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     
     .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 25px rgba(74, 144, 226, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(74, 144, 226, 0.2);
     }
     
     .metric-card h3 {
         color: #4a90e2;
-        font-size: 1.8em;
-        margin: 8px 0;
+        font-size: 1.5em !important;
+        margin: 5px 0 !important;
         font-weight: 700;
+        line-height: 1.2;
     }
     
     .metric-card p {
         color: #666;
-        font-size: 0.85em;
-        margin: 3px 0;
+        font-size: 0.8em !important;
+        margin: 2px 0 !important;
         font-weight: 500;
+        line-height: 1.2;
     }
     
     .metric-card .delta {
         color: #51cf66;
-        font-size: 0.8em;
+        font-size: 0.75em !important;
         font-weight: 600;
-        margin-top: 3px;
+        margin-top: 2px;
     }
     
     /* Compact header for small screens */
     .main-header {
         background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
-        padding: 30px 20px;
-        border-radius: 20px;
+        padding: 20px 15px;
+        border-radius: 15px;
         color: white;
         text-align: center;
-        margin-bottom: 20px;
-        box-shadow: 0 8px 30px rgba(74, 144, 226, 0.25);
+        margin-bottom: 15px;
+        box-shadow: 0 6px 25px rgba(74, 144, 226, 0.25);
     }
     
     .main-header h1 {
-        font-size: 2em !important;
-        margin-bottom: 0 !important;
+        font-size: 1.6em !important;
+        margin: 0 0 8px 0 !important;
+        line-height: 1.2 !important;
     }
     
     .main-header h3 {
-        font-size: 1.1em !important;
-        margin: 8px 0 !important;
+        font-size: 0.95em !important;
+        margin: 5px 0 !important;
+        line-height: 1.3 !important;
+        font-weight: 400;
     }
     
     .main-header p {
-        font-size: 0.95em !important;
+        font-size: 0.85em !important;
+        margin: 5px 0 0 0 !important;
+        opacity: 0.9;
     }
     
     .section-header {
         background: linear-gradient(90deg, #4a90e2 0%, #7b68ee 100%);
-        padding: 15px 20px;
-        border-radius: 12px;
+        padding: 12px 15px;
+        border-radius: 10px;
         color: white;
-        margin: 20px 0;
+        margin: 15px 0 10px 0;
         font-weight: 600;
         box-shadow: 0 3px 12px rgba(74, 144, 226, 0.2);
-        font-size: 1.1em;
+        font-size: 1em;
     }
     
     .stButton>button {
         background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
         color: white;
         border: none;
-        padding: 12px 30px;
-        border-radius: 25px;
+        padding: 10px 20px;
+        border-radius: 20px;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         transition: all 0.3s ease;
         box-shadow: 0 3px 12px rgba(74, 144, 226, 0.3);
         width: 100%;
@@ -141,89 +152,101 @@ st.markdown("""
     
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        box-shadow: 0 5px 18px rgba(74, 144, 226, 0.4);
         background: linear-gradient(135deg, #357abd 0%, #6a5acd 100%);
     }
     
     .risk-badge-high {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
         color: white;
-        padding: 8px 20px;
-        border-radius: 20px;
+        padding: 6px 15px;
+        border-radius: 15px;
         font-weight: 600;
         display: inline-block;
-        box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
-        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        font-size: 12px;
     }
     
     .risk-badge-low {
         background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
         color: white;
-        padding: 8px 20px;
-        border-radius: 20px;
+        padding: 6px 15px;
+        border-radius: 15px;
         font-weight: 600;
         display: inline-block;
-        box-shadow: 0 2px 10px rgba(81, 207, 102, 0.3);
-        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(81, 207, 102, 0.3);
+        font-size: 12px;
     }
     
     .content-container {
         background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
         border: 1px solid rgba(74, 144, 226, 0.1);
-        margin: 15px 0;
+        margin: 10px 0;
     }
     
     .diet-card {
         background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
         color: #333;
-        padding: 20px;
-        border-radius: 15px;
-        margin: 15px 0;
-        box-shadow: 0 3px 12px rgba(255, 152, 0, 0.15);
+        padding: 15px;
+        border-radius: 12px;
+        margin: 10px 0;
+        box-shadow: 0 2px 10px rgba(255, 152, 0, 0.15);
         border: 1px solid rgba(255, 152, 0, 0.2);
     }
     
-    /* Compact feature cards */
+    /* Compact feature cards - better word wrapping */
     .feature-card {
         background: white;
-        padding: 25px 20px;
-        border-radius: 15px;
+        padding: 20px 15px;
+        border-radius: 12px;
         text-align: center;
         box-shadow: 0 3px 15px rgba(74, 144, 226, 0.1);
         border: 1px solid rgba(74, 144, 226, 0.08);
         transition: all 0.3s ease;
         height: 100%;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 180px;
     }
     
     .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 25px rgba(74, 144, 226, 0.18);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(74, 144, 226, 0.18);
     }
     
-    .feature-card h3 {
-        font-size: 1.2em !important;
+    .feature-card .icon {
+        font-size: 2.5em !important;
         margin-bottom: 10px !important;
     }
     
-    .feature-card p {
-        font-size: 14px !important;
-        line-height: 1.5 !important;
+    .feature-card h3 {
+        font-size: 1.1em !important;
+        margin: 8px 0 !important;
+        line-height: 1.3 !important;
+        color: #4a90e2;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     
-    .feature-card div {
-        font-size: 3em !important;
-        margin-bottom: 15px !important;
+    .feature-card p {
+        font-size: 0.85em !important;
+        line-height: 1.4 !important;
+        color: #666;
+        margin: 5px 0 !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     
     .dataframe {
-        border-radius: 12px;
+        border-radius: 10px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        font-size: 0.85em;
+        font-size: 0.8em;
     }
     
     .streamlit-expanderHeader {
@@ -231,55 +254,75 @@ st.markdown("""
         border-radius: 8px;
         color: #4a90e2;
         font-weight: 600;
-        font-size: 0.9em;
+        font-size: 0.85em;
     }
     
-    /* Responsive columns - stack on smaller screens */
-    @media (max-width: 1366px) {
+    /* Better responsive columns */
+    div[data-testid="column"] {
+        padding: 0 0.3rem !important;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1400px) {
         .main-header h1 {
-            font-size: 1.8em !important;
+            font-size: 1.5em !important;
         }
         
-        .metric-card h3 {
-            font-size: 1.6em;
+        .feature-card {
+            min-height: 160px;
+        }
+        
+        .feature-card .icon {
+            font-size: 2.2em !important;
         }
     }
     
     @media (max-width: 1024px) {
         .main-header {
-            padding: 25px 15px;
+            padding: 15px 10px;
         }
         
         .main-header h1 {
-            font-size: 1.6em !important;
+            font-size: 1.3em !important;
         }
         
         .main-header h3 {
-            font-size: 1em !important;
+            font-size: 0.85em !important;
         }
         
         .feature-card {
-            padding: 20px 15px;
+            padding: 15px 10px;
+            min-height: 150px;
         }
-    }
-    
-    /* Make sure content doesn't overflow */
-    .stApp > header {
-        background-color: transparent;
+        
+        .feature-card h3 {
+            font-size: 1em !important;
+        }
+        
+        .feature-card p {
+            font-size: 0.8em !important;
+        }
+        
+        .metric-card h3 {
+            font-size: 1.3em !important;
+        }
     }
     
     /* Compact spacing for all elements */
     .element-container {
-        margin-bottom: 0.5rem !important;
+        margin-bottom: 0.4rem !important;
     }
     
-    div[data-testid="column"] {
-        padding: 0 0.5rem !important;
-    }
-    
+    /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
+    /* Better text wrapping */
+    h1, h2, h3, h4, h5, h6, p {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -377,39 +420,33 @@ if page == "🏠 Home":
     </div>
     """, unsafe_allow_html=True)
     
-    # Feature cards in single column on small screens, 3 columns on larger
+    # Feature cards - responsive grid
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
         <div class="feature-card">
-            <div>🤖</div>
-            <h3 style="color: #4a90e2;">AI-Powered Analysis</h3>
-            <p style="color: #666;">
-                Advanced ML algorithms with 98.5% accuracy
-            </p>
+            <div class="icon">🤖</div>
+            <h3>AI-Powered Analysis</h3>
+            <p>Advanced ML algorithms with 98.5% accuracy</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <div>🍎</div>
-            <h3 style="color: #7b68ee;">Personalized Plans</h3>
-            <p style="color: #666;">
-                Custom recommendations for individual health profiles
-            </p>
+            <div class="icon">🍎</div>
+            <h3>Personalized Plans</h3>
+            <p>Custom recommendations for individual health profiles</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown("""
         <div class="feature-card">
-            <div>📈</div>
-            <h3 style="color: #51cf66;">Real-time Insights</h3>
-            <p style="color: #666;">
-                Instant risk assessment and dietary guidelines
-            </p>
+            <div class="icon">📈</div>
+            <h3>Real-time Insights</h3>
+            <p>Instant risk assessment and dietary guidelines</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -421,7 +458,7 @@ if page == "🏠 Home":
         <div class="metric-card">
             <p>👥 Patients</p>
             <h3>{total_patients:,}</h3>
-            <p style="color: #999; font-size: 0.75em;">Total analyzed</p>
+            <p style="color: #999; font-size: 0.7em;">Total analyzed</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -448,7 +485,7 @@ if page == "🏠 Home":
         <div class="metric-card">
             <p>🎯 Accuracy</p>
             <h3>98.5%</h3>
-            <p style="color: #51cf66; font-size: 0.75em; font-weight: 600;">High</p>
+            <p style="color: #51cf66; font-size: 0.7em; font-weight: 600;">High</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -516,8 +553,8 @@ if page == "🏠 Home":
     with col2:
         st.markdown("""
         <div class="content-container" style="background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%); color: white;">
-            <h4>💡 Pro Tip</h4>
-            <p style="font-size: 13px; line-height: 1.4;">
+            <h4 style="margin: 0 0 8px 0; font-size: 1em;">💡 Pro Tip</h4>
+            <p style="font-size: 0.8em; line-height: 1.4; margin: 0;">
                 Plans are customized based on risk profile and medical indicators.
             </p>
         </div>
@@ -539,7 +576,7 @@ elif page == "📊 Dashboard":
         <div class="metric-card">
             <p>👥 Patients</p>
             <h3>{total_patients:,}</h3>
-            <p style="color: #999; font-size: 0.75em;">Total</p>
+            <p style="color: #999; font-size: 0.7em;">Total</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -565,8 +602,8 @@ elif page == "📊 Dashboard":
         st.markdown("""
         <div class="metric-card">
             <p>⚡ Speed</p>
-            <h3>< 1s</h3>
-            <p style="color: #999; font-size: 0.75em;">Per patient</p>
+            <h3>&lt; 1s</h3>
+            <p style="color: #999; font-size: 0.7em;">Per patient</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -587,16 +624,17 @@ elif page == "📊 Dashboard":
             ),
             hole=0.5,
             textinfo='label+percent',
-            textfont=dict(size=14, color='white'),
+            textfont=dict(size=12, color='white'),
             hovertemplate='<b>%{label}</b><br>%{value} patients<extra></extra>'
         )])
         
         fig_pie.update_layout(
             title_text="<b>Risk Distribution</b>",
             title_x=0.5,
+            title_font_size=14,
             showlegend=True,
             paper_bgcolor='rgba(255,255,255,0.95)',
-            height=350
+            height=320
         )
         
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -611,7 +649,7 @@ elif page == "📊 Dashboard":
                 marker_line_width=2,
                 text=risk_counts["Patient Count"],
                 textposition='outside',
-                textfont=dict(size=14),
+                textfont=dict(size=12),
                 hovertemplate='<b>%{x}</b><br>%{y} patients<extra></extra>'
             )
         ])
@@ -619,10 +657,11 @@ elif page == "📊 Dashboard":
         fig_bar.update_layout(
             title_text="<b>Risk Comparison</b>",
             title_x=0.5,
+            title_font_size=14,
             xaxis_title="Risk Level",
             yaxis_title="Patients",
             paper_bgcolor='rgba(255,255,255,0.95)',
-            height=350
+            height=320
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
@@ -642,7 +681,7 @@ elif page == "📊 Dashboard":
         
         filtered_df = df_with_risk[df_with_risk["risk_label"].isin(risk_filter)]
         
-        st.dataframe(filtered_df, use_container_width=True, height=350)
+        st.dataframe(filtered_df, use_container_width=True, height=300)
         
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
@@ -659,12 +698,12 @@ elif page == "📊 Dashboard":
 
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.9); border-radius: 12px; margin-top: 20px;">
-    <h3 style="color: #4a90e2; margin-bottom: 10px;">🏥 AI Diet Planner</h3>
-    <p style="color: #666; font-size: 14px; margin-bottom: 8px;">
+<div style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; margin-top: 15px;">
+    <h3 style="color: #4a90e2; margin-bottom: 8px; font-size: 1.1em;">🏥 AI Diet Planner</h3>
+    <p style="color: #666; font-size: 0.8em; margin-bottom: 5px;">
         © 2025 AI Diet Planner | ML-Powered Healthcare
     </p>
-    <p style="color: #999; font-size: 12px;">
+    <p style="color: #999; font-size: 0.75em; margin: 0;">
         v3.0 | Updated Jan 2025 | 98.5% Accuracy
     </p>
 </div>
