@@ -15,27 +15,62 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ================= CUSTOM CSS =================
+# ================= CUSTOM CSS WITH FIXED SIDEBAR =================
 st.markdown("""
 <style>
+    /* Force sidebar to always be visible */
+    [data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+    }
+    
+    [data-testid="stSidebar"][aria-expanded="false"] {
+        margin-left: 0px !important;
+        transform: none !important;
+    }
+    
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        margin-left: 0px !important;
+    }
+    
+    /* Hide collapse button if you want sidebar always visible */
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+    
+    /* Main app background */
     .stApp {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         min-height: 100vh;
     }
+    
     .block-container {
         padding-top: 1rem;
         padding-bottom: 1rem;
+        max-width: 100%;
     }
+    
+    /* Sidebar styling */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
         border-right: 2px solid #dee2e6;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
     }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+    
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3 {
         color: #4a90e2 !important;
     }
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
+    
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] label {
         color: #333 !important;
     }
+    
+    /* Metric cards */
     .metric-card {
         background: #ffffff;
         padding: 30px 25px;
@@ -46,28 +81,34 @@ st.markdown("""
         transition: all 0.3s ease;
         margin-bottom: 20px;
     }
+    
     .metric-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 30px rgba(74, 144, 226, 0.2);
     }
+    
     .metric-card h3 {
         color: #4a90e2;
         font-size: 2.5em;
         margin: 10px 0;
         font-weight: 700;
     }
+    
     .metric-card p {
         color: #666;
         font-size: 1em;
         margin: 5px 0;
         font-weight: 500;
     }
+    
     .metric-card .delta {
         color: #51cf66;
         font-size: 0.9em;
         font-weight: 600;
         margin-top: 5px;
     }
+    
+    /* Headers */
     .main-header {
         background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
         padding: 50px 40px;
@@ -77,6 +118,7 @@ st.markdown("""
         margin-bottom: 30px;
         box-shadow: 0 10px 40px rgba(74, 144, 226, 0.25);
     }
+    
     .section-header {
         background: linear-gradient(90deg, #4a90e2 0%, #7b68ee 100%);
         padding: 20px 30px;
@@ -87,6 +129,8 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
         font-size: 1.3em;
     }
+    
+    /* Buttons */
     .stButton>button {
         background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
         color: white;
@@ -99,11 +143,14 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
         width: 100%;
     }
+    
     .stButton>button:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
         background: linear-gradient(135deg, #357abd 0%, #6a5acd 100%);
     }
+    
+    /* Risk badges */
     .risk-badge-high {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
         color: white;
@@ -114,6 +161,7 @@ st.markdown("""
         box-shadow: 0 3px 12px rgba(255, 107, 107, 0.3);
         font-size: 14px;
     }
+    
     .risk-badge-low {
         background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
         color: white;
@@ -124,6 +172,8 @@ st.markdown("""
         box-shadow: 0 3px 12px rgba(81, 207, 102, 0.3);
         font-size: 14px;
     }
+    
+    /* Content containers */
     .content-container {
         background: white;
         padding: 30px;
@@ -132,6 +182,7 @@ st.markdown("""
         border: 1px solid rgba(74, 144, 226, 0.1);
         margin: 20px 0;
     }
+    
     .diet-card {
         background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
         color: #333;
@@ -141,6 +192,8 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(255, 152, 0, 0.15);
         border: 1px solid rgba(255, 152, 0, 0.2);
     }
+    
+    /* Feature cards */
     .feature-card {
         background: white;
         padding: 35px 30px;
@@ -151,24 +204,47 @@ st.markdown("""
         transition: all 0.3s ease;
         height: 100%;
     }
+    
     .feature-card:hover {
         transform: translateY(-8px);
         box-shadow: 0 8px 30px rgba(74, 144, 226, 0.18);
     }
+    
+    /* Dataframes */
     .dataframe {
         border-radius: 15px;
         overflow: hidden;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
+    
+    /* Expanders */
     .streamlit-expanderHeader {
         background: rgba(74, 144, 226, 0.08);
         border-radius: 10px;
         color: #4a90e2;
         font-weight: 600;
     }
+    
+    /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        [data-testid="stSidebar"] {
+            min-width: 250px !important;
+            max-width: 250px !important;
+        }
+        
+        .metric-card h3 {
+            font-size: 2em;
+        }
+        
+        .main-header {
+            padding: 30px 20px;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -243,11 +319,18 @@ low_risk = sum(df_with_risk["risk_label"] == "LOW DIET RISK")
 high_risk_pct = (high_risk / total_patients * 100) if total_patients > 0 else 0
 low_risk_pct = 100 - high_risk_pct
 
-# ================= SIDEBAR NAVIGATION =================
+# ================= SIDEBAR NAVIGATION (ALWAYS VISIBLE) =================
 with st.sidebar:
-    st.markdown("### 🏥 Navigation Menu")
+    st.markdown("# 🏥 AI Diet Planner")
+    st.markdown("### Navigation Menu")
     st.markdown("---")
-    page = st.radio("Select Page", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
+    
+    # Radio buttons for navigation
+    page = st.radio(
+        "Select Page",
+        ["🏠 Home", "📊 Dashboard"],
+        label_visibility="visible"
+    )
     
     st.markdown("---")
     st.markdown("### 📊 Quick Stats")
@@ -255,6 +338,13 @@ with st.sidebar:
     st.metric("🎯 Model Accuracy", "98.5%")
     st.markdown(f"**🔍 Features Analyzed:** {len(FEATURE_COLUMNS)}")
     st.markdown("**🤖 Model:** LightGBM")
+    
+    st.markdown("---")
+    st.markdown("### ℹ️ About")
+    st.info("""
+    This AI-powered system analyzes patient medical data to predict diet risks 
+    and generate personalized nutrition plans.
+    """)
 
 # ================= HOME PAGE =================
 if page == "🏠 Home":
@@ -351,7 +441,7 @@ if page == "🏠 Home":
             show_all = st.checkbox("Show all data", value=False)
         
         display_df = infer_df if show_all else infer_df.head(10)
-        st.dataframe(display_df, width="stretch", height=300)
+        st.dataframe(display_df, use_container_width=True, height=300)
         st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('<div class="section-header">🔍 Generate Personalized Diet Plans</div>', unsafe_allow_html=True)
@@ -489,7 +579,7 @@ elif page == "📊 Dashboard":
             height=400
         )
         
-        st.plotly_chart(fig_pie, width="stretch")
+        st.plotly_chart(fig_pie, use_container_width=True)
     
     with col2:
         fig_bar = go.Figure(data=[
@@ -517,7 +607,7 @@ elif page == "📊 Dashboard":
             height=400
         )
         
-        st.plotly_chart(fig_bar, width="stretch")
+        st.plotly_chart(fig_bar, use_container_width=True)
     
     st.markdown('<div class="section-header">📋 Detailed Patient Risk Analysis</div>', unsafe_allow_html=True)
     
@@ -534,7 +624,7 @@ elif page == "📊 Dashboard":
         
         filtered_df = df_with_risk[df_with_risk["risk_label"].isin(risk_filter)]
         
-        st.dataframe(filtered_df, width="stretch", height=400)
+        st.dataframe(filtered_df, use_container_width=True, height=400)
         
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
@@ -544,7 +634,7 @@ elif page == "📊 Dashboard":
                 data=csv,
                 file_name=f"patient_risk_data_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
-                width="stretch"
+                use_container_width=True
             )
         
         st.markdown('</div>', unsafe_allow_html=True)
