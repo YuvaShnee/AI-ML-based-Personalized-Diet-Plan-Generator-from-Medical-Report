@@ -1,513 +1,536 @@
-
 import streamlit as st
-import anthropic
 import json
-import base64
-from datetime import datetime
+import PyPDF2
+import re
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
-from reportlab.lib.colors import HexColor
-import os
 
 # Page configuration
 st.set_page_config(
-    page_title="AI Diet Plan Generator",
-    page_icon="🍏",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="AI Medical Diet Plan Generator",
+    page_icon="🏥",
+    layout="wide"
 )
 
-# Custom CSS
-st.markdown("""
-<style>
-    .main {
-        background: linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%);
-    }
-    .stButton>button {
-        background-color: #10b981;
-        color: white;
-        font-weight: bold;
-        padding: 0.75rem 2rem;
-        border-radius: 0.5rem;
-        border: none;
-        font-size: 1.1rem;
-    }
-    .stButton>button:hover {
-        background-color: #059669;
-    }
-    .warning-box {
-        background-color: #fef3c7;
-        padding: 1rem;
-        border-left: 4px solid #f59e0b;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-    }
-    .metric-card {
-        background-color: #f0fdf4;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #86efac;
-        margin: 0.5rem 0;
-    }
-    .food-card {
-        background-color: #f9fafb;
-        padding: 0.75rem;
-        border-left: 3px solid #10b981;
-        border-radius: 0.375rem;
-        margin: 0.5rem 0;
-    }
-    h1 {
-        color: #047857;
-    }
-    h2 {
-        color: #059669;
-        margin-top: 2rem;
-    }
-    h3 {
-        color: #10b981;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Initialize session state
-if 'diet_plan' not in st.session_state:
-    st.session_state.diet_plan = None
-if 'api_key' not in st.session_state:
-    st.session_state.api_key = os.getenv('ANTHROPIC_API_KEY', '')
-
-def analyze_medical_report(pdf_file, api_key):
-    """Analyze medical report using Claude API"""
+# Extract text from PDF
+def extract_text_from_pdf(pdf_file):
     try:
-        # Read PDF and convert to base64
-        pdf_data = pdf_file.read()
-        base64_pdf = base64.standard_b64encode(pdf_data).decode('utf-8')
-        
-        # Initialize Anthropic client
-        client = anthropic.Anthropic(api_key=api_key)
-        
-        # Create message with document
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=4000,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "document",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "application/pdf",
-                                "data": base64_pdf
-                            }
-                        },
-                        {
-                            "type": "text",
-                            "text": """Analyze this medical report and create a comprehensive personalized diet plan. 
-
-Please extract and analyze:
-1. Key health metrics (blood sugar, cholesterol, vitamins, minerals, etc.)
-2. Medical conditions or concerns identified
-3. Any deficiencies or abnormal values
-
-Then provide a detailed response in JSON format with this structure:
-{
-  "patientInfo": {
-    "conditions": ["list of identified conditions"],
-    "deficiencies": ["list of deficiencies"],
-    "keyMetrics": {"metric": "value and status"}
-  },
-  "dietaryRecommendations": {
-    "foodsToInclude": ["detailed list with reasons"],
-    "foodsToAvoid": ["detailed list with reasons"],
-    "supplementsSuggested": ["list if needed"]
-  },
-  "mealPlan": {
-    "breakfast": ["option 1", "option 2", "option 3"],
-    "lunch": ["option 1", "option 2", "option 3"],
-    "dinner": ["option 1", "option 2", "option 3"],
-    "snacks": ["option 1", "option 2", "option 3"]
-  },
-  "nutritionGuidelines": {
-    "dailyCalories": "recommended range",
-    "macroDistribution": {"protein": "x%", "carbs": "y%", "fats": "z%"},
-    "hydration": "water intake recommendation"
-  },
-  "lifestyle": {
-    "exerciseRecommendations": "exercise suggestions",
-    "sleepGuidelines": "sleep recommendations",
-    "stressManagement": "stress tips"
-  },
-  "warnings": ["important precautions or warnings"],
-  "generalAdvice": "overall health advice"
-}
-
-Ensure all recommendations are evidence-based and appropriate for the conditions identified. Return ONLY the JSON, no other text."""
-                        }
-                    ]
-                }
-            ]
-        )
-        
-        # Extract text from response
-        response_text = message.content[0].text
-        
-        # Parse JSON from response
-        # Try to find JSON in the response
-        start_idx = response_text.find('{')
-        end_idx = response_text.rfind('}') + 1
-        
-        if start_idx != -1 and end_idx > start_idx:
-            json_str = response_text[start_idx:end_idx]
-            diet_plan = json.loads(json_str)
-            return diet_plan, None
-        else:
-            return None, "Could not parse diet plan from AI response"
-            
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text()
+        return text
     except Exception as e:
-        return None, f"Error analyzing report: {str(e)}"
+        st.error(f"Error reading PDF: {str(e)}")
+        return None
 
-def generate_pdf(diet_plan):
-    """Generate PDF report of the diet plan"""
+# Extract health metrics using regex patterns
+def extract_health_metrics(text):
+    metrics = {}
+    
+    # Common patterns for health metrics
+    patterns = {
+        'bmi': r'BMI[:\s]+(\d+\.?\d*)',
+        'cholesterol': r'(?:Total\s+)?Cholesterol[:\s]+(\d+)',
+        'blood_sugar': r'(?:Blood\s+Sugar|Glucose|FBS|RBS)[:\s]+(\d+)',
+        'blood_pressure': r'(?:Blood\s+Pressure|BP)[:\s]+(\d+/\d+)',
+        'hemoglobin': r'(?:Hemoglobin|Hb|HGB)[:\s]+(\d+\.?\d*)',
+        'triglycerides': r'Triglycerides[:\s]+(\d+)',
+        'hdl': r'HDL[:\s]+(\d+)',
+        'ldl': r'LDL[:\s]+(\d+)',
+        'weight': r'Weight[:\s]+(\d+\.?\d*)',
+        'height': r'Height[:\s]+(\d+\.?\d*)',
+    }
+    
+    for key, pattern in patterns.items():
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            metrics[key] = match.group(1)
+    
+    return metrics
+
+# Determine health status based on values
+def get_health_status(metric, value):
+    try:
+        val = float(value) if '/' not in str(value) else value
+    except:
+        return "Normal"
+    
+    ranges = {
+        'bmi': {'low': 18.5, 'high': 24.9},
+        'cholesterol': {'low': 0, 'high': 200},
+        'blood_sugar': {'low': 70, 'high': 100},
+        'hemoglobin': {'low': 12, 'high': 16},
+        'triglycerides': {'low': 0, 'high': 150},
+        'hdl': {'low': 40, 'high': 1000},
+        'ldl': {'low': 0, 'high': 100},
+    }
+    
+    if metric in ranges:
+        if isinstance(val, str):
+            return "Normal"
+        if val < ranges[metric]['low']:
+            return "Low"
+        elif val > ranges[metric]['high']:
+            return "High"
+    
+    return "Normal"
+
+# Generate diet plan based on health conditions
+def generate_diet_plan(metrics, diagnoses):
+    has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
+    has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
+    has_high_cholesterol = metrics.get('cholesterol_status') == 'High'
+    
+    # Base meal plan
+    meal_plan = {
+        'breakfast': [
+            "Oatmeal with berries and chia seeds",
+            "Greek yogurt with nuts and honey",
+            "Whole grain toast with avocado"
+        ],
+        'lunch': [
+            "Grilled chicken salad with olive oil dressing",
+            "Quinoa bowl with roasted vegetables",
+            "Brown rice with lentils and steamed broccoli"
+        ],
+        'dinner': [
+            "Baked salmon with sweet potato",
+            "Grilled fish with mixed vegetables",
+            "Chicken breast with cauliflower rice"
+        ],
+        'snacks': [
+            "Mixed nuts (almonds, walnuts)",
+            "Fresh fruits (apple, orange, berries)",
+            "Carrot and cucumber sticks with hummus"
+        ]
+    }
+    
+    # Customize based on conditions
+    if has_diabetes:
+        meal_plan['breakfast'].append("Sugar-free protein smoothie")
+        meal_plan['snacks'].append("Celery with almond butter")
+    
+    if has_hypertension:
+        meal_plan['lunch'].append("Low-sodium vegetable soup")
+        meal_plan['dinner'].append("Herb-seasoned chicken (no salt)")
+    
+    return meal_plan
+
+# Generate nutrition guidelines
+def generate_nutrition_guidelines(diagnoses):
+    has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
+    has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
+    
+    base_guidelines = {
+        'daily_calories': 2000,
+        'protein_g': 60,
+        'carbs_g': 250,
+        'fats_g': 70,
+        'fiber_g': 30,
+        'sodium_mg': 2300,
+        'foods_to_include': [
+            "Leafy green vegetables (spinach, kale)",
+            "Whole grains (brown rice, quinoa, oats)",
+            "Lean proteins (chicken, fish, legumes)",
+            "Healthy fats (olive oil, avocado, nuts)",
+            "Fresh fruits (berries, apples, citrus)"
+        ],
+        'foods_to_avoid': [
+            "Processed foods and fast food",
+            "Sugary drinks and desserts",
+            "Refined carbohydrates (white bread, pasta)",
+            "Trans fats and hydrogenated oils",
+            "Excessive salt and sodium"
+        ]
+    }
+    
+    if has_diabetes:
+        base_guidelines['carbs_g'] = 150
+        base_guidelines['foods_to_avoid'].extend([
+            "High-sugar fruits (mangoes, grapes)",
+            "White rice and potatoes"
+        ])
+    
+    if has_hypertension:
+        base_guidelines['sodium_mg'] = 1500
+        base_guidelines['foods_to_avoid'].extend([
+            "Canned soups and processed meats",
+            "Pickles and salty snacks"
+        ])
+    
+    return base_guidelines
+
+# Generate lifestyle recommendations
+def generate_lifestyle_recommendations(diagnoses):
+    has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
+    has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
+    
+    recommendations = {
+        'exercise': [
+            "30 minutes of brisk walking daily",
+            "Yoga or stretching 3 times per week",
+            "Light strength training 2 times per week"
+        ],
+        'sleep': "Aim for 7-8 hours of quality sleep each night. Maintain a consistent sleep schedule.",
+        'stress_management': [
+            "Practice deep breathing exercises",
+            "Meditation for 10-15 minutes daily",
+            "Engage in hobbies and relaxation activities"
+        ],
+        'hydration': "Drink 8-10 glasses (2-2.5 liters) of water daily. Start your day with a glass of water."
+    }
+    
+    if has_diabetes:
+        recommendations['exercise'].append("Monitor blood sugar before and after exercise")
+    
+    if has_hypertension:
+        recommendations['exercise'].append("Avoid heavy lifting, focus on cardio")
+    
+    return recommendations
+
+# Analyze medical report
+def analyze_medical_report(report_text):
+    # Extract metrics
+    raw_metrics = extract_health_metrics(report_text)
+    
+    # Build structured health metrics
+    health_metrics = {}
+    units = {
+        'bmi': 'kg/m²',
+        'cholesterol': 'mg/dL',
+        'blood_sugar': 'mg/dL',
+        'blood_pressure': 'mmHg',
+        'hemoglobin': 'g/dL',
+        'triglycerides': 'mg/dL',
+        'hdl': 'mg/dL',
+        'ldl': 'mg/dL'
+    }
+    
+    for metric, value in raw_metrics.items():
+        if metric in units:
+            status = get_health_status(metric, value)
+            health_metrics[metric] = {
+                'value': value,
+                'status': status,
+                'unit': units[metric]
+            }
+    
+    # Extract patient info (basic extraction)
+    name_match = re.search(r'(?:Name|Patient)[:\s]+([A-Za-z\s]+)', report_text, re.IGNORECASE)
+    age_match = re.search(r'Age[:\s]+(\d+)', report_text, re.IGNORECASE)
+    gender_match = re.search(r'(?:Gender|Sex)[:\s]+(Male|Female)', report_text, re.IGNORECASE)
+    
+    patient_info = {
+        'name': name_match.group(1).strip() if name_match else "Patient",
+        'age': int(age_match.group(1)) if age_match else 0,
+        'gender': gender_match.group(1) if gender_match else "Unknown"
+    }
+    
+    # Determine diagnoses based on metrics
+    diagnoses = []
+    if health_metrics.get('blood_sugar', {}).get('status') == 'High':
+        diagnoses.append("Elevated Blood Sugar / Pre-diabetes Risk")
+    if health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0] != '120':
+        if int(health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0]) > 130:
+            diagnoses.append("Hypertension (High Blood Pressure)")
+    if health_metrics.get('cholesterol', {}).get('status') == 'High':
+        diagnoses.append("High Cholesterol")
+    if health_metrics.get('bmi', {}).get('status') == 'High':
+        diagnoses.append("Overweight / Obesity")
+    
+    if not diagnoses:
+        diagnoses = ["No significant conditions detected"]
+    
+    # Generate recommendations
+    meal_plan = generate_diet_plan(health_metrics, diagnoses)
+    nutrition_guidelines = generate_nutrition_guidelines(diagnoses)
+    lifestyle_recommendations = generate_lifestyle_recommendations(diagnoses)
+    
+    return {
+        'patient_info': patient_info,
+        'health_metrics': health_metrics,
+        'diagnoses': diagnoses,
+        'meal_plan': meal_plan,
+        'nutrition_guidelines': nutrition_guidelines,
+        'lifestyle_recommendations': lifestyle_recommendations
+    }
+
+# Display health metrics with color coding
+def display_health_metrics(metrics):
+    st.subheader("🩺 Health Status Assessment")
+    
+    cols = st.columns(4)
+    
+    for idx, (key, data) in enumerate(metrics.items()):
+        col = cols[idx % 4]
+        
+        status = data.get("status", "Normal")
+        if status == "High":
+            color = "🔴"
+        elif status == "Low":
+            color = "🟡"
+        else:
+            color = "🟢"
+        
+        with col:
+            st.metric(
+                label=f"{color} {key.upper().replace('_', ' ')}",
+                value=f"{data.get('value', 'N/A')} {data.get('unit', '')}"
+            )
+
+# Generate PDF report
+def generate_pdf_report(data):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
     story = []
     styles = getSampleStyleSheet()
     
-    # Custom styles
+    # Title
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
         fontSize=24,
-        textColor=HexColor('#10b981'),
-        spaceAfter=20,
-        alignment=TA_CENTER
+        textColor=colors.HexColor('#1f77b4'),
+        spaceAfter=30
     )
-    
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=16,
-        textColor=HexColor('#059669'),
-        spaceAfter=12,
-        spaceBefore=20
-    )
-    
-    subheading_style = ParagraphStyle(
-        'CustomSubHeading',
-        parent=styles['Heading3'],
-        fontSize=14,
-        textColor=HexColor('#047857'),
-        spaceAfter=8,
-        spaceBefore=12
-    )
-    
-    # Title
-    story.append(Paragraph("🍏 Personalized Diet Plan", title_style))
-    story.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y')}", styles['Normal']))
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Warnings
-    if diet_plan.get('warnings'):
-        story.append(Paragraph("⚠️ Important Warnings", heading_style))
-        for warning in diet_plan['warnings']:
-            story.append(Paragraph(f"• {warning}", styles['Normal']))
-        story.append(Spacer(1, 0.2*inch))
-    
-    # Health Analysis
-    story.append(Paragraph("📊 Health Analysis", heading_style))
-    
-    story.append(Paragraph("Identified Conditions", subheading_style))
-    for condition in diet_plan['patientInfo']['conditions']:
-        story.append(Paragraph(f"• {condition}", styles['Normal']))
-    story.append(Spacer(1, 0.1*inch))
-    
-    if diet_plan['patientInfo']['deficiencies']:
-        story.append(Paragraph("Deficiencies", subheading_style))
-        for deficiency in diet_plan['patientInfo']['deficiencies']:
-            story.append(Paragraph(f"• {deficiency}", styles['Normal']))
-        story.append(Spacer(1, 0.1*inch))
-    
-    story.append(Paragraph("Key Metrics", subheading_style))
-    for metric, value in diet_plan['patientInfo']['keyMetrics'].items():
-        story.append(Paragraph(f"<b>{metric}:</b> {value}", styles['Normal']))
+    story.append(Paragraph("Medical Diet Plan Report", title_style))
     story.append(Spacer(1, 0.2*inch))
     
-    # Dietary Recommendations
-    story.append(Paragraph("🥗 Dietary Recommendations", heading_style))
+    # Patient Info
+    story.append(Paragraph("<b>Patient Information</b>", styles['Heading2']))
+    patient = data['patient_info']
+    story.append(Paragraph(f"Name: {patient['name']}", styles['Normal']))
+    story.append(Paragraph(f"Age: {patient['age']} | Gender: {patient['gender']}", styles['Normal']))
+    story.append(Spacer(1, 0.2*inch))
     
-    story.append(Paragraph("Foods to Include", subheading_style))
-    for food in diet_plan['dietaryRecommendations']['foodsToInclude']:
-        story.append(Paragraph(f"• {food}", styles['Normal']))
-    story.append(Spacer(1, 0.1*inch))
+    # Health Metrics
+    story.append(Paragraph("<b>Health Metrics</b>", styles['Heading2']))
+    for key, val in data['health_metrics'].items():
+        story.append(Paragraph(
+            f"{key.upper()}: {val['value']} {val['unit']} - {val['status']}", 
+            styles['Normal']
+        ))
+    story.append(Spacer(1, 0.2*inch))
     
-    story.append(Paragraph("Foods to Avoid", subheading_style))
-    for food in diet_plan['dietaryRecommendations']['foodsToAvoid']:
-        story.append(Paragraph(f"• {food}", styles['Normal']))
-    story.append(Spacer(1, 0.1*inch))
-    
-    if diet_plan['dietaryRecommendations']['supplementsSuggested']:
-        story.append(Paragraph("Suggested Supplements", subheading_style))
-        for supplement in diet_plan['dietaryRecommendations']['supplementsSuggested']:
-            story.append(Paragraph(f"• {supplement}", styles['Normal']))
+    # Diagnoses
+    story.append(Paragraph("<b>Diagnoses</b>", styles['Heading2']))
+    for diag in data['diagnoses']:
+        story.append(Paragraph(f"• {diag}", styles['Normal']))
     story.append(Spacer(1, 0.2*inch))
     
     # Meal Plan
-    story.append(Paragraph("🍽️ Sample Meal Plan", heading_style))
-    
-    for meal_type, options in diet_plan['mealPlan'].items():
-        story.append(Paragraph(f"{meal_type.capitalize()} Options", subheading_style))
-        for i, option in enumerate(options, 1):
-            story.append(Paragraph(f"{i}. {option}", styles['Normal']))
+    story.append(Paragraph("<b>Personalized Meal Plan</b>", styles['Heading2']))
+    for meal, items in data['meal_plan'].items():
+        story.append(Paragraph(f"<b>{meal.upper()}:</b>", styles['Normal']))
+        for item in items:
+            story.append(Paragraph(f"  • {item}", styles['Normal']))
         story.append(Spacer(1, 0.1*inch))
     
     # Nutrition Guidelines
-    story.append(Paragraph("📈 Nutrition Guidelines", heading_style))
-    story.append(Paragraph(f"<b>Daily Calories:</b> {diet_plan['nutritionGuidelines']['dailyCalories']}", styles['Normal']))
-    
-    story.append(Paragraph("<b>Macro Distribution:</b>", styles['Normal']))
-    for macro, percentage in diet_plan['nutritionGuidelines']['macroDistribution'].items():
-        story.append(Paragraph(f"• {macro.capitalize()}: {percentage}", styles['Normal']))
-    
-    story.append(Paragraph(f"<b>Hydration:</b> {diet_plan['nutritionGuidelines']['hydration']}", styles['Normal']))
     story.append(Spacer(1, 0.2*inch))
-    
-    # Lifestyle Recommendations
-    story.append(Paragraph("💪 Lifestyle Recommendations", heading_style))
-    story.append(Paragraph(f"<b>Exercise:</b> {diet_plan['lifestyle']['exerciseRecommendations']}", styles['Normal']))
-    story.append(Paragraph(f"<b>Sleep:</b> {diet_plan['lifestyle']['sleepGuidelines']}", styles['Normal']))
-    story.append(Paragraph(f"<b>Stress Management:</b> {diet_plan['lifestyle']['stressManagement']}", styles['Normal']))
-    story.append(Spacer(1, 0.2*inch))
-    
-    # General Advice
-    story.append(Paragraph("💡 General Advice", heading_style))
-    story.append(Paragraph(diet_plan['generalAdvice'], styles['Normal']))
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Disclaimer
-    disclaimer_style = ParagraphStyle(
-        'Disclaimer',
-        parent=styles['Normal'],
-        fontSize=10,
-        textColor=HexColor('#6b7280'),
-        alignment=TA_CENTER
-    )
-    story.append(Paragraph("<b>Disclaimer:</b> This diet plan is AI-generated based on medical report analysis. Please consult with healthcare professionals before making significant dietary changes.", disclaimer_style))
+    story.append(Paragraph("<b>Daily Nutrition Targets</b>", styles['Heading2']))
+    nutrition = data['nutrition_guidelines']
+    story.append(Paragraph(f"Calories: {nutrition['daily_calories']} kcal", styles['Normal']))
+    story.append(Paragraph(f"Protein: {nutrition['protein_g']}g | Carbs: {nutrition['carbs_g']}g | Fats: {nutrition['fats_g']}g", styles['Normal']))
+    story.append(Paragraph(f"Fiber: {nutrition['fiber_g']}g | Sodium: {nutrition['sodium_mg']}mg", styles['Normal']))
     
     doc.build(story)
     buffer.seek(0)
     return buffer
 
-# Main App
-st.title("🍏 AI-Powered Diet Plan Generator")
-st.markdown("### Upload your medical report for personalized nutrition recommendations")
-
-# Sidebar for API key
-with st.sidebar:
-    st.header("⚙️ Configuration")
-    api_key_input = st.text_input(
-        "Anthropic API Key",
-        value=st.session_state.api_key,
-        type="password",
-        help="Enter your Anthropic API key. Get one at https://console.anthropic.com/"
-    )
-    
-    if api_key_input:
-        st.session_state.api_key = api_key_input
-    
-    st.markdown("---")
-    st.markdown("### 📋 About")
-    st.markdown("""
-    This app uses AI to analyze your medical reports and generate:
-    - Personalized diet recommendations
-    - Sample meal plans
-    - Nutrition guidelines
-    - Lifestyle advice
-    
-    **Supported formats:** PDF medical reports
-    """)
-    
-    if st.session_state.diet_plan:
-        st.markdown("---")
-        st.success("✅ Diet plan generated!")
-
-# Main content
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.markdown("#### 📄 Upload Medical Report")
-    uploaded_file = st.file_uploader(
-        "Choose a PDF file",
-        type=['pdf'],
-        help="Upload blood test results, health checkups, or other medical reports"
-    )
-    
-    if uploaded_file and st.session_state.api_key:
-        if st.button("🔍 Analyze Report & Generate Diet Plan", use_container_width=True):
-            with st.spinner("🤖 AI is analyzing your medical report and creating personalized recommendations..."):
-                diet_plan, error = analyze_medical_report(uploaded_file, st.session_state.api_key)
-                
-                if error:
-                    st.error(f"❌ {error}")
-                else:
-                    st.session_state.diet_plan = diet_plan
-                    st.success("✅ Diet plan generated successfully!")
-                    st.rerun()
-    elif uploaded_file and not st.session_state.api_key:
-        st.warning("⚠️ Please enter your Anthropic API key in the sidebar to analyze the report.")
-
-with col2:
-    if st.session_state.diet_plan:
-        st.markdown("#### 📥 Export Options")
-        
-        # JSON Export
-        json_data = json.dumps(st.session_state.diet_plan, indent=2)
-        st.download_button(
-            label="📊 Download JSON",
-            data=json_data,
-            file_name=f"diet-plan-{datetime.now().strftime('%Y%m%d')}.json",
-            mime="application/json",
-            use_container_width=True
-        )
-        
-        # PDF Export
-        try:
-            pdf_buffer = generate_pdf(st.session_state.diet_plan)
-            st.download_button(
-                label="📄 Download PDF",
-                data=pdf_buffer,
-                file_name=f"diet-plan-{datetime.now().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"PDF generation error: {str(e)}")
-
-# Display Results
-if st.session_state.diet_plan:
-    diet_plan = st.session_state.diet_plan
-    
+# Main app
+def main():
+    st.title("🏥 Medical Diet Plan Generator")
+    st.markdown("### Upload your medical report to get personalized diet recommendations")
     st.markdown("---")
     
-    # Warnings
-    if diet_plan.get('warnings'):
-        st.markdown('<div class="warning-box">', unsafe_allow_html=True)
-        st.markdown("### ⚠️ Important Warnings")
-        for warning in diet_plan['warnings']:
-            st.markdown(f"- {warning}")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Health Analysis
-    st.markdown("## 📊 Health Analysis")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### Identified Conditions")
-        for condition in diet_plan['patientInfo']['conditions']:
-            st.markdown(f'<div class="food-card">🔴 {condition}</div>', unsafe_allow_html=True)
-    
-    with col2:
-        if diet_plan['patientInfo']['deficiencies']:
-            st.markdown("### Deficiencies")
-            for deficiency in diet_plan['patientInfo']['deficiencies']:
-                st.markdown(f'<div class="food-card">🟠 {deficiency}</div>', unsafe_allow_html=True)
-    
-    st.markdown("### Key Metrics")
-    metrics_cols = st.columns(2)
-    for idx, (metric, value) in enumerate(diet_plan['patientInfo']['keyMetrics'].items()):
-        with metrics_cols[idx % 2]:
-            st.markdown(f'<div class="metric-card"><b>{metric}:</b> {value}</div>', unsafe_allow_html=True)
-    
-    # Dietary Recommendations
-    st.markdown("## 🥗 Dietary Recommendations")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### ✅ Foods to Include")
-        for food in diet_plan['dietaryRecommendations']['foodsToInclude']:
-            st.markdown(f'<div class="food-card">{food}</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("### ❌ Foods to Avoid")
-        for food in diet_plan['dietaryRecommendations']['foodsToAvoid']:
-            st.markdown(f'<div class="food-card">{food}</div>', unsafe_allow_html=True)
-    
-    if diet_plan['dietaryRecommendations']['supplementsSuggested']:
-        st.markdown("### 💊 Suggested Supplements")
-        supp_text = " • ".join(diet_plan['dietaryRecommendations']['supplementsSuggested'])
-        st.info(supp_text)
-    
-    # Meal Plan
-    st.markdown("## 🍽️ Sample Meal Plan")
-    
-    meal_cols = st.columns(2)
-    for idx, (meal_type, options) in enumerate(diet_plan['mealPlan'].items()):
-        with meal_cols[idx % 2]:
-            st.markdown(f"### {meal_type.capitalize()}")
-            for i, option in enumerate(options, 1):
-                st.markdown(f'<div class="food-card"><b>Option {i}:</b> {option}</div>', unsafe_allow_html=True)
-    
-    # Nutrition Guidelines
-    st.markdown("## 📈 Nutrition Guidelines")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Daily Calories", diet_plan['nutritionGuidelines']['dailyCalories'])
-    
-    with col2:
-        macros = diet_plan['nutritionGuidelines']['macroDistribution']
-        st.markdown("**Macro Distribution:**")
-        for macro, percentage in macros.items():
-            st.markdown(f"- {macro.capitalize()}: **{percentage}**")
-    
-    with col3:
-        st.metric("Hydration", diet_plan['nutritionGuidelines']['hydration'])
-    
-    # Lifestyle Recommendations
-    st.markdown("## 💪 Lifestyle Recommendations")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("### 🏃 Exercise")
-        st.info(diet_plan['lifestyle']['exerciseRecommendations'])
-    
-    with col2:
-        st.markdown("### 😴 Sleep")
-        st.info(diet_plan['lifestyle']['sleepGuidelines'])
-    
-    with col3:
-        st.markdown("### 🧘 Stress Management")
-        st.info(diet_plan['lifestyle']['stressManagement'])
-    
-    # General Advice
-    st.markdown("## 💡 General Advice")
-    st.success(diet_plan['generalAdvice'])
-    
-    # Disclaimer
-    st.markdown("---")
-    st.caption("⚠️ **Disclaimer:** This diet plan is AI-generated based on medical report analysis. Please consult with healthcare professionals before making significant dietary changes.")
-else:
-    # Welcome message
-    st.info("👆 Upload a medical report PDF to get started!")
-    
-    with st.expander("ℹ️ How it works"):
+    # Sidebar
+    with st.sidebar:
+        st.header("📋 How It Works")
         st.markdown("""
-        1. **Upload** your medical report (PDF format)
-        2. **AI Analysis** extracts health metrics and identifies conditions
-        3. **Personalized Plan** generated with:
-           - Foods to include and avoid
-           - Sample meal plans
-           - Nutrition guidelines
-           - Lifestyle recommendations
-        4. **Export** your plan as PDF or JSON
-        
-        The AI analyzes blood test results, vitamin levels, cholesterol, blood sugar, and other health markers to create evidence-based recommendations.
+        1. **Upload** your medical report (PDF)
+        2. **Extract** health metrics automatically
+        3. **Get** personalized diet plan
+        4. **Download** your custom report
         """)
+        st.markdown("---")
+        st.info("💡 Your report should contain standard health metrics like BMI, cholesterol, blood sugar, etc.")
+        
+        st.markdown("---")
+        st.warning("⚠️ **Disclaimer**: This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.")
+    
+    # File upload
+    uploaded_file = st.file_uploader(
+        "📄 Upload Medical Report (PDF)", 
+        type=['pdf'],
+        help="Upload a PDF file containing your medical test results"
+    )
+    
+    if uploaded_file:
+        with st.spinner("🔍 Reading your medical report..."):
+            report_text = extract_text_from_pdf(uploaded_file)
+        
+        if report_text:
+            st.success("✅ Medical report uploaded successfully!")
+            
+            with st.expander("📄 View Extracted Text"):
+                st.text_area("Report Content", report_text[:1000] + "..." if len(report_text) > 1000 else report_text, height=200)
+            
+            if st.button("🚀 Generate Diet Plan", type="primary", use_container_width=True):
+                with st.spinner("📊 Analyzing your health metrics and creating personalized recommendations..."):
+                    analysis = analyze_medical_report(report_text)
+                
+                if analysis:
+                    st.success("✅ Analysis complete!")
+                    st.markdown("---")
+                    
+                    # Patient Information
+                    st.header("👤 Patient Information")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Name", analysis['patient_info']['name'])
+                    with col2:
+                        st.metric("Age", analysis['patient_info']['age'])
+                    with col3:
+                        st.metric("Gender", analysis['patient_info']['gender'])
+                    
+                    st.markdown("---")
+                    
+                    # Health Metrics
+                    if analysis['health_metrics']:
+                        display_health_metrics(analysis['health_metrics'])
+                        st.markdown("---")
+                    else:
+                        st.warning("⚠️ No health metrics detected in the report. Please ensure your PDF contains standard lab values.")
+                    
+                    # Diagnoses
+                    st.subheader("🏥 Health Assessment")
+                    for diag in analysis['diagnoses']:
+                        if "No significant" in diag:
+                            st.success(f"✅ {diag}")
+                        else:
+                            st.warning(f"⚠️ {diag}")
+                    
+                    st.markdown("---")
+                    
+                    # Meal Plan
+                    st.subheader("🍽️ Personalized Meal Plan")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("#### 🌅 Breakfast")
+                        for item in analysis['meal_plan']['breakfast']:
+                            st.write(f"• {item}")
+                        
+                        st.markdown("#### ☀️ Lunch")
+                        for item in analysis['meal_plan']['lunch']:
+                            st.write(f"• {item}")
+                    
+                    with col2:
+                        st.markdown("#### 🌙 Dinner")
+                        for item in analysis['meal_plan']['dinner']:
+                            st.write(f"• {item}")
+                        
+                        st.markdown("#### 🍎 Snacks")
+                        for item in analysis['meal_plan']['snacks']:
+                            st.write(f"• {item}")
+                    
+                    st.markdown("---")
+                    
+                    # Nutrition Guidelines
+                    st.subheader("📈 Daily Nutrition Targets")
+                    
+                    nutrition = analysis['nutrition_guidelines']
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Calories", f"{nutrition['daily_calories']} kcal")
+                        st.metric("Protein", f"{nutrition['protein_g']}g")
+                    with col2:
+                        st.metric("Carbohydrates", f"{nutrition['carbs_g']}g")
+                        st.metric("Fats", f"{nutrition['fats_g']}g")
+                    with col3:
+                        st.metric("Fiber", f"{nutrition['fiber_g']}g")
+                        st.metric("Sodium", f"{nutrition['sodium_mg']}mg")
+                    
+                    st.markdown("---")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("#### ✅ Foods to Include")
+                        for food in nutrition['foods_to_include']:
+                            st.success(f"✓ {food}")
+                    
+                    with col2:
+                        st.markdown("#### ❌ Foods to Avoid")
+                        for food in nutrition['foods_to_avoid']:
+                            st.error(f"✗ {food}")
+                    
+                    st.markdown("---")
+                    
+                    # Lifestyle Recommendations
+                    st.subheader("💪 Lifestyle Recommendations")
+                    
+                    lifestyle = analysis['lifestyle_recommendations']
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("#### 🏃 Exercise Plan")
+                        for exercise in lifestyle['exercise']:
+                            st.write(f"• {exercise}")
+                        
+                        st.markdown("#### 😌 Stress Management")
+                        for tip in lifestyle['stress_management']:
+                            st.write(f"• {tip}")
+                    
+                    with col2:
+                        st.markdown("#### 😴 Sleep Recommendation")
+                        st.info(lifestyle['sleep'])
+                        
+                        st.markdown("#### 💧 Hydration Guide")
+                        st.info(lifestyle['hydration'])
+                    
+                    st.markdown("---")
+                    
+                    # Download Options
+                    st.subheader("📥 Download Your Personalized Plan")
+                    
+                    col1, col2, col3 = st.columns([1,1,1])
+                    
+                    with col1:
+                        # JSON Download
+                        json_str = json.dumps(analysis, indent=2)
+                        st.download_button(
+                            label="📄 Download JSON",
+                            data=json_str,
+                            file_name="diet_plan.json",
+                            mime="application/json",
+                            use_container_width=True
+                        )
+                    
+                    with col2:
+                        # PDF Download
+                        pdf_buffer = generate_pdf_report(analysis)
+                        st.download_button(
+                            label="📑 Download PDF",
+                            data=pdf_buffer,
+                            file_name="diet_plan_report.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                    
+                    with col3:
+                        # Share button (placeholder)
+                        if st.button("📤 Share Report", use_container_width=True):
+                            st.info("💡 You can share the downloaded PDF with your doctor or nutritionist!")
+                    
+                    st.markdown("---")
+                    st.success("🎉 Your personalized diet plan is ready!")
+
+if __name__ == "__main__":
+    main()
