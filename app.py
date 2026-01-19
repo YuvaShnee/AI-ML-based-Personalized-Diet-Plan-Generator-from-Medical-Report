@@ -13,8 +13,195 @@ from reportlab.lib.units import inch
 st.set_page_config(
     page_title="AI Medical Diet Plan Generator",
     page_icon="🏥",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# Custom CSS for modern, colorful design
+st.markdown("""
+<style>
+    /* Main background gradient */
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Card styling */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    
+    /* Custom cards */
+    .custom-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        border-left: 5px solid #667eea;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .success-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .warning-card {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Header styling */
+    h1 {
+        color: white !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        font-size: 3rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    h2 {
+        color: #667eea !important;
+        font-weight: 700 !important;
+        margin-top: 1.5rem !important;
+    }
+    
+    h3 {
+        color: #764ba2 !important;
+        font-weight: 600 !important;
+    }
+    
+    h4 {
+        color: #4facfe !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+    }
+    
+    /* Download button styling */
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 24px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+    }
+    
+    /* Metric styling */
+    [data-testid="stMetricValue"] {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+    
+    /* File uploader */
+    [data-testid="stFileUploader"] {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    /* Info boxes */
+    .stAlert {
+        border-radius: 12px;
+        border-left: 5px solid #4facfe;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background: white;
+        border-radius: 10px;
+        font-weight: 600;
+        color: #667eea;
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Text input */
+    .stTextInput > div > div > input {
+        border-radius: 10px;
+        border: 2px solid #e0e0e0;
+    }
+    
+    /* Custom badge */
+    .badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin: 5px;
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    .badge-info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    
+    /* Divider */
+    hr {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #667eea, transparent);
+        margin: 2rem 0;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Extract text from PDF
 def extract_text_from_pdf(pdf_file):
@@ -262,7 +449,8 @@ def analyze_medical_report(report_text):
 
 # Display health metrics with color coding
 def display_health_metrics(metrics):
-    st.subheader("🩺 Health Status Assessment")
+    st.markdown("### 🩺 Health Status Assessment")
+    st.markdown("")
     
     cols = st.columns(4)
     
@@ -271,17 +459,31 @@ def display_health_metrics(metrics):
         
         status = data.get("status", "Normal")
         if status == "High":
-            color = "🔴"
+            emoji = "🔴"
+            badge_class = "badge-warning"
         elif status == "Low":
-            color = "🟡"
+            emoji = "🟡"
+            badge_class = "badge-warning"
         else:
-            color = "🟢"
+            emoji = "🟢"
+            badge_class = "badge-success"
         
         with col:
-            st.metric(
-                label=f"{color} {key.upper().replace('_', ' ')}",
-                value=f"{data.get('value', 'N/A')} {data.get('unit', '')}"
-            )
+            st.markdown(f"""
+            <div style='background: white; padding: 20px; border-radius: 12px; 
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; 
+                        margin-bottom: 15px; border-top: 4px solid #667eea;'>
+                <div style='font-size: 2rem;'>{emoji}</div>
+                <div style='color: #667eea; font-weight: 600; margin: 10px 0; font-size: 0.9rem;'>
+                    {key.upper().replace('_', ' ')}
+                </div>
+                <div style='font-size: 1.5rem; font-weight: 700; color: #333;'>
+                    {data.get('value', 'N/A')}
+                </div>
+                <div style='color: #888; font-size: 0.85rem;'>{data.get('unit', '')}</div>
+                <div class='badge {badge_class}' style='margin-top: 10px;'>{status}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # Generate PDF report
 def generate_pdf_report(data):
@@ -295,7 +497,7 @@ def generate_pdf_report(data):
         'CustomTitle',
         parent=styles['Heading1'],
         fontSize=24,
-        textColor=colors.HexColor('#1f77b4'),
+        textColor=colors.HexColor('#667eea'),
         spaceAfter=30
     )
     story.append(Paragraph("Medical Diet Plan Report", title_style))
@@ -345,30 +547,96 @@ def generate_pdf_report(data):
 
 # Main app
 def main():
-    st.title("🏥 Medical Diet Plan Generator")
-    st.markdown("### Upload your medical report to get personalized diet recommendations")
-    st.markdown("---")
+    # Hero Section
+    st.markdown("""
+    <div style='text-align: center; padding: 2rem 0;'>
+        <h1 style='font-size: 3.5rem; margin-bottom: 0;'>🏥 AI Medical Diet Planner</h1>
+        <p style='font-size: 1.3rem; color: white; font-weight: 300; margin-top: 0.5rem;'>
+            Transform Your Health with Personalized Nutrition
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<hr>", unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        st.header("📋 How It Works")
         st.markdown("""
-        1. **Upload** your medical report (PDF)
-        2. **Extract** health metrics automatically
-        3. **Get** personalized diet plan
-        4. **Download** your custom report
-        """)
-        st.markdown("---")
-        st.info("💡 Your report should contain standard health metrics like BMI, cholesterol, blood sugar, etc.")
+        <div style='text-align: center; padding: 1rem 0;'>
+            <h2 style='color: white !important; font-size: 1.8rem;'>📋 How It Works</h2>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.markdown("---")
-        st.warning("⚠️ **Disclaimer**: This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.")
+        st.markdown("""
+        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
+            <div style='margin: 15px 0;'>
+                <div style='font-size: 2rem; margin-bottom: 5px;'>📤</div>
+                <div style='font-weight: 600; font-size: 1.1rem;'>Upload Report</div>
+                <div style='font-size: 0.9rem; opacity: 0.9;'>Upload your medical PDF</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
+            <div style='margin: 15px 0;'>
+                <div style='font-size: 2rem; margin-bottom: 5px;'>🔍</div>
+                <div style='font-weight: 600; font-size: 1.1rem;'>AI Analysis</div>
+                <div style='font-size: 0.9rem; opacity: 0.9;'>Extract health metrics</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
+            <div style='margin: 15px 0;'>
+                <div style='font-size: 2rem; margin-bottom: 5px;'>🍽️</div>
+                <div style='font-weight: 600; font-size: 1.1rem;'>Get Diet Plan</div>
+                <div style='font-size: 0.9rem; opacity: 0.9;'>Personalized recommendations</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 15px 0;'>
+            <div style='margin: 15px 0;'>
+                <div style='font-size: 2rem; margin-bottom: 5px;'>📥</div>
+                <div style='font-weight: 600; font-size: 1.1rem;'>Download</div>
+                <div style='font-size: 0.9rem; opacity: 0.9;'>Save your custom report</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<hr style='border-color: rgba(255,255,255,0.3);'>", unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style='background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; border-left: 4px solid white;'>
+            <div style='font-weight: 600; margin-bottom: 8px;'>💡 Pro Tip</div>
+            <div style='font-size: 0.9rem;'>Ensure your report contains BMI, cholesterol, blood sugar, and other standard metrics</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style='background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; border-left: 4px solid #FFD700;'>
+            <div style='font-weight: 600; margin-bottom: 8px;'>⚠️ Disclaimer</div>
+            <div style='font-size: 0.85rem;'>This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.</div>
+        </div>
+        """, unsafe_allow_html=True)
     
-    # File upload
+    # File upload section
+    st.markdown("""
+    <div style='background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 20px 0;'>
+        <h3 style='color: #667eea; text-align: center; margin-bottom: 20px;'>📄 Upload Your Medical Report</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
     uploaded_file = st.file_uploader(
-        "📄 Upload Medical Report (PDF)", 
+        "Choose a PDF file", 
         type=['pdf'],
-        help="Upload a PDF file containing your medical test results"
+        help="Upload a PDF file containing your medical test results",
+        label_visibility="collapsed"
     )
     
     if uploaded_file:
@@ -376,161 +644,45 @@ def main():
             report_text = extract_text_from_pdf(uploaded_file)
         
         if report_text:
-            st.success("✅ Medical report uploaded successfully!")
+            st.markdown("""
+            <div style='background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); 
+                        padding: 15px 25px; border-radius: 10px; color: white; 
+                        text-align: center; font-weight: 600; margin: 20px 0;'>
+                ✅ Medical report uploaded successfully!
+            </div>
+            """, unsafe_allow_html=True)
             
-            with st.expander("📄 View Extracted Text"):
+            with st.expander("📄 View Extracted Text", expanded=False):
                 st.text_area("Report Content", report_text[:1000] + "..." if len(report_text) > 1000 else report_text, height=200)
             
-            if st.button("🚀 Generate Diet Plan", type="primary", use_container_width=True):
-                with st.spinner("📊 Analyzing your health metrics and creating personalized recommendations..."):
-                    analysis = analyze_medical_report(report_text)
-                
-                if analysis:
-                    st.success("✅ Analysis complete!")
-                    st.markdown("---")
+            col1, col2, col3 = st.columns([1,2,1])
+            with col2:
+                if st.button("🚀 Generate Diet Plan", type="primary", use_container_width=True):
+                    with st.spinner("📊 Analyzing your health metrics and creating personalized recommendations..."):
+                        analysis = analyze_medical_report(report_text)
                     
-                    # Patient Information
-                    st.header("👤 Patient Information")
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Name", analysis['patient_info']['name'])
-                    with col2:
-                        st.metric("Age", analysis['patient_info']['age'])
-                    with col3:
-                        st.metric("Gender", analysis['patient_info']['gender'])
-                    
-                    st.markdown("---")
-                    
-                    # Health Metrics
-                    if analysis['health_metrics']:
-                        display_health_metrics(analysis['health_metrics'])
-                        st.markdown("---")
-                    else:
-                        st.warning("⚠️ No health metrics detected in the report. Please ensure your PDF contains standard lab values.")
-                    
-                    # Diagnoses
-                    st.subheader("🏥 Health Assessment")
-                    for diag in analysis['diagnoses']:
-                        if "No significant" in diag:
-                            st.success(f"✅ {diag}")
-                        else:
-                            st.warning(f"⚠️ {diag}")
-                    
-                    st.markdown("---")
-                    
-                    # Meal Plan
-                    st.subheader("🍽️ Personalized Meal Plan")
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown("#### 🌅 Breakfast")
-                        for item in analysis['meal_plan']['breakfast']:
-                            st.write(f"• {item}")
+                    if analysis:
+                        st.markdown("""
+                        <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                                    padding: 15px 25px; border-radius: 10px; color: white; 
+                                    text-align: center; font-weight: 600; margin: 20px 0;'>
+                            ✅ Analysis Complete! Your personalized plan is ready.
+                        </div>
+                        """, unsafe_allow_html=True)
                         
-                        st.markdown("#### ☀️ Lunch")
-                        for item in analysis['meal_plan']['lunch']:
-                            st.write(f"• {item}")
-                    
-                    with col2:
-                        st.markdown("#### 🌙 Dinner")
-                        for item in analysis['meal_plan']['dinner']:
-                            st.write(f"• {item}")
+                        st.markdown("<hr>", unsafe_allow_html=True)
                         
-                        st.markdown("#### 🍎 Snacks")
-                        for item in analysis['meal_plan']['snacks']:
-                            st.write(f"• {item}")
-                    
-                    st.markdown("---")
-                    
-                    # Nutrition Guidelines
-                    st.subheader("📈 Daily Nutrition Targets")
-                    
-                    nutrition = analysis['nutrition_guidelines']
-                    
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Calories", f"{nutrition['daily_calories']} kcal")
-                        st.metric("Protein", f"{nutrition['protein_g']}g")
-                    with col2:
-                        st.metric("Carbohydrates", f"{nutrition['carbs_g']}g")
-                        st.metric("Fats", f"{nutrition['fats_g']}g")
-                    with col3:
-                        st.metric("Fiber", f"{nutrition['fiber_g']}g")
-                        st.metric("Sodium", f"{nutrition['sodium_mg']}mg")
-                    
-                    st.markdown("---")
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown("#### ✅ Foods to Include")
-                        for food in nutrition['foods_to_include']:
-                            st.success(f"✓ {food}")
-                    
-                    with col2:
-                        st.markdown("#### ❌ Foods to Avoid")
-                        for food in nutrition['foods_to_avoid']:
-                            st.error(f"✗ {food}")
-                    
-                    st.markdown("---")
-                    
-                    # Lifestyle Recommendations
-                    st.subheader("💪 Lifestyle Recommendations")
-                    
-                    lifestyle = analysis['lifestyle_recommendations']
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown("#### 🏃 Exercise Plan")
-                        for exercise in lifestyle['exercise']:
-                            st.write(f"• {exercise}")
+                        # Patient Information
+                        st.markdown("""
+                        <div style='background: white; padding: 25px; border-radius: 15px; 
+                                    box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 20px 0;'>
+                            <h2 style='color: #667eea; margin-bottom: 20px;'>👤 Patient Information</h2>
+                        """, unsafe_allow_html=True)
                         
-                        st.markdown("#### 😌 Stress Management")
-                        for tip in lifestyle['stress_management']:
-                            st.write(f"• {tip}")
-                    
-                    with col2:
-                        st.markdown("#### 😴 Sleep Recommendation")
-                        st.info(lifestyle['sleep'])
-                        
-                        st.markdown("#### 💧 Hydration Guide")
-                        st.info(lifestyle['hydration'])
-                    
-                    st.markdown("---")
-                    
-                    # Download Options
-                    st.subheader("📥 Download Your Personalized Plan")
-                    
-                    col1, col2, col3 = st.columns([1,1,1])
-                    
-                    with col1:
-                        # JSON Download
-                        json_str = json.dumps(analysis, indent=2)
-                        st.download_button(
-                            label="📄 Download JSON",
-                            data=json_str,
-                            file_name="diet_plan.json",
-                            mime="application/json",
-                            use_container_width=True
-                        )
-                    
-                    with col2:
-                        # PDF Download
-                        pdf_buffer = generate_pdf_report(analysis)
-                        st.download_button(
-                            label="📑 Download PDF",
-                            data=pdf_buffer,
-                            file_name="diet_plan_report.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                    
-                    with col3:
-                        # Share button (placeholder)
-                        if st.button("📤 Share Report", use_container_width=True):
-                            st.info("💡 You can share the downloaded PDF with your doctor or nutritionist!")
-                    
-                    st.markdown("---")
-                    st.success("🎉 Your personalized diet plan is ready!")
-
-if __name__ == "__main__":
-    main()
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.markdown(f"""
+                            <div style='text-align: center; padding: 15px;'>
+                                <div style='font-size: 2.5rem;'>👨‍⚕️</div>
+                                <div style='color: #888; font-size: 0.9rem; margin-top: 8px;'>Name</div>
+                                <div style='font-size: 1.3rem; font-weight: 700; color: #333;'
