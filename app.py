@@ -404,7 +404,7 @@ with st.sidebar:
     page = st.radio("Select Page", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
     
     st.markdown("---")
-    st.markdown("### 📊 Quick Stats")
+    st.markdown("### 📊 Quick Status")
     st.metric("👥 Patients", f"{total_patients:,}")
     st.metric("🎯 Accuracy", "98.5%")
     st.markdown(f"**Features:** {len(FEATURE_COLUMNS)}")
