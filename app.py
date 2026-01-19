@@ -1,710 +1,566 @@
-import streamlit as st
-import pandas as pd
-import joblib
-import json
-import os
-import plotly.graph_objects as go
-from datetime import datetime
-import time
+import React, { useState } from 'react';
+import { Upload, FileText, Download, Loader2, Heart, Apple, Activity, AlertCircle } from 'lucide-react';
 
-# ================= STREAMLIT CONFIG =================
-st.set_page_config(
-    page_title="AI Diet Planner | Smart Healthcare",
-    layout="wide",
-    page_icon="🏥",
-    initial_sidebar_state="expanded"
-)
+const DietPlanGenerator = () => {
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [dietPlan, setDietPlan] = useState(null);
+  const [error, setError] = useState(null);
 
-# ================= CUSTOM CSS - OPTIMIZED FOR SMALL SCREENS =================
-st.markdown("""
-<style>
-    /* Make everything scrollable and responsive */
-    .stApp {
-        background: linear-gradient(135deg, #f0f4ff 0%, #fef5ff 50%, #fff9f0 100%);
-        min-height: 100vh;
-    }
-    
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        max-width: 100% !important;
-    }
-    
-    /* Sidebar styling - compact for small screens */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-        border-right: 2px solid #e8efff;
-        min-width: 200px !important;
-    }
-    
-    [data-testid="stSidebar"] h1, 
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3 {
-        color: #4a90e2 !important;
-        font-size: 1.1em !important;
-    }
-    
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] label {
-        color: #333 !important;
-        font-size: 0.85em !important;
-    }
-    
-    /* Compact metric cards for small screens */
-    .metric-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-        padding: 12px 10px;
-        border-radius: 12px;
-        box-shadow: 0 3px 15px rgba(74, 144, 226, 0.12);
-        border: 1px solid rgba(74, 144, 226, 0.1);
-        text-align: center;
-        transition: all 0.3s ease;
-        margin-bottom: 10px;
-        min-height: 100px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(74, 144, 226, 0.2);
-    }
-    
-    .metric-card h3 {
-        color: #4a90e2;
-        font-size: 1.5em !important;
-        margin: 5px 0 !important;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-    
-    .metric-card p {
-        color: #666;
-        font-size: 0.8em !important;
-        margin: 2px 0 !important;
-        font-weight: 500;
-        line-height: 1.2;
-    }
-    
-    .metric-card .delta {
-        color: #51cf66;
-        font-size: 0.75em !important;
-        font-weight: 600;
-        margin-top: 2px;
-    }
-    
-    /* Compact header for small screens */
-    .main-header {
-        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
-        padding: 20px 15px;
-        border-radius: 15px;
-        color: white;
-        text-align: center;
-        margin-bottom: 15px;
-        box-shadow: 0 6px 25px rgba(74, 144, 226, 0.25);
-    }
-    
-    .main-header h1 {
-        font-size: 1.6em !important;
-        margin: 0 0 8px 0 !important;
-        line-height: 1.2 !important;
-    }
-    
-    .main-header h3 {
-        font-size: 0.95em !important;
-        margin: 5px 0 !important;
-        line-height: 1.3 !important;
-        font-weight: 400;
-    }
-    
-    .main-header p {
-        font-size: 0.85em !important;
-        margin: 5px 0 0 0 !important;
-        opacity: 0.9;
-    }
-    
-    .section-header {
-        background: linear-gradient(90deg, #4a90e2 0%, #7b68ee 100%);
-        padding: 12px 15px;
-        border-radius: 10px;
-        color: white;
-        margin: 15px 0 10px 0;
-        font-weight: 600;
-        box-shadow: 0 3px 12px rgba(74, 144, 226, 0.2);
-        font-size: 1em;
-    }
-    
-    .stButton>button {
-        background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 13px;
-        transition: all 0.3s ease;
-        box-shadow: 0 3px 12px rgba(74, 144, 226, 0.3);
-        width: 100%;
-    }
-    
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 18px rgba(74, 144, 226, 0.4);
-        background: linear-gradient(135deg, #357abd 0%, #6a5acd 100%);
-    }
-    
-    .risk-badge-high {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-        color: white;
-        padding: 6px 15px;
-        border-radius: 15px;
-        font-weight: 600;
-        display: inline-block;
-        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-        font-size: 12px;
-    }
-    
-    .risk-badge-low {
-        background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
-        color: white;
-        padding: 6px 15px;
-        border-radius: 15px;
-        font-weight: 600;
-        display: inline-block;
-        box-shadow: 0 2px 8px rgba(81, 207, 102, 0.3);
-        font-size: 12px;
-    }
-    
-    .content-container {
-        background: white;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-        border: 1px solid rgba(74, 144, 226, 0.1);
-        margin: 10px 0;
-    }
-    
-    .diet-card {
-        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-        color: #333;
-        padding: 15px;
-        border-radius: 12px;
-        margin: 10px 0;
-        box-shadow: 0 2px 10px rgba(255, 152, 0, 0.15);
-        border: 1px solid rgba(255, 152, 0, 0.2);
-    }
-    
-    /* Compact feature cards - better word wrapping */
-    .feature-card {
-        background: white;
-        padding: 20px 15px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 3px 15px rgba(74, 144, 226, 0.1);
-        border: 1px solid rgba(74, 144, 226, 0.08);
-        transition: all 0.3s ease;
-        height: 100%;
-        margin-bottom: 10px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-height: 180px;
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 20px rgba(74, 144, 226, 0.18);
-    }
-    
-    .feature-card .icon {
-        font-size: 2.5em !important;
-        margin-bottom: 10px !important;
-    }
-    
-    .feature-card h3 {
-        font-size: 1.1em !important;
-        margin: 8px 0 !important;
-        line-height: 1.3 !important;
-        color: #4a90e2;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-    
-    .feature-card p {
-        font-size: 0.85em !important;
-        line-height: 1.4 !important;
-        color: #666;
-        margin: 5px 0 !important;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-    
-    .dataframe {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        font-size: 0.8em;
-    }
-    
-    .streamlit-expanderHeader {
-        background: rgba(74, 144, 226, 0.08);
-        border-radius: 8px;
-        color: #4a90e2;
-        font-weight: 600;
-        font-size: 0.85em;
-    }
-    
-    /* Better responsive columns */
-    div[data-testid="column"] {
-        padding: 0 0.3rem !important;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 1400px) {
-        .main-header h1 {
-            font-size: 1.5em !important;
-        }
-        
-        .feature-card {
-            min-height: 160px;
-        }
-        
-        .feature-card .icon {
-            font-size: 2.2em !important;
-        }
-    }
-    
-    @media (max-width: 1024px) {
-        .main-header {
-            padding: 15px 10px;
-        }
-        
-        .main-header h1 {
-            font-size: 1.3em !important;
-        }
-        
-        .main-header h3 {
-            font-size: 0.85em !important;
-        }
-        
-        .feature-card {
-            padding: 15px 10px;
-            min-height: 150px;
-        }
-        
-        .feature-card h3 {
-            font-size: 1em !important;
-        }
-        
-        .feature-card p {
-            font-size: 0.8em !important;
-        }
-        
-        .metric-card h3 {
-            font-size: 1.3em !important;
-        }
-    }
-    
-    /* Compact spacing for all elements */
-    .element-container {
-        margin-bottom: 0.4rem !important;
-    }
-    
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Better text wrapping */
-    h1, h2, h3, h4, h5, h6, p {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-</style>
-""", unsafe_allow_html=True)
+  const handleFileUpload = async (e) => {
+    const uploadedFile = e.target.files[0];
+    if (!uploadedFile) return;
 
-# ================= PATHS =================
-MODEL_PATH = "diet_app/best_model_LightGBM.pkl"
-TRAIN_PATH = "diet_app/train_data.csv"
-INFER_PATH = "diet_app/final_unique_range_valid_medical_data.csv"
-DIET_PATH = "diets/Actionable_Diet_Guidelines_from_TXT.json"
+    if (uploadedFile.type !== 'application/pdf') {
+      setError('Please upload a PDF file');
+      return;
+    }
 
-TARGET_COLUMN = "binary_diet"
-LEAKAGE_COLUMNS = [
-    "blood_sugar", "cholesterol", "hemoglobin", "alkaline_phosphatase",
-    "cancer_severity_score", "diet_risk_score", "continuous_risk_score",
-    "liver_risk_score"
-]
+    setFile(uploadedFile);
+    setError(null);
+    setDietPlan(null);
+  };
 
-# ================= OPTIMIZED DATA LOADING =================
-@st.cache_resource(show_spinner=False)
-def load_model_and_data():
-    try:
-        with st.spinner("🚀 Loading AI models and patient data..."):
-            model = joblib.load(MODEL_PATH)
-            train_df = pd.read_csv(TRAIN_PATH)
-            X_train = train_df.drop(columns=LEAKAGE_COLUMNS + [TARGET_COLUMN], errors="ignore")
-            feature_columns = X_train.columns.tolist()
-            infer_df = pd.read_csv(INFER_PATH)
+  const analyzeMedicalReport = async () => {
+    if (!file) return;
+
+    setLoading(true);
+    setAnalyzing(true);
+    setError(null);
+
+    try {
+      // Read the PDF file
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+
+      // Call Claude API to analyze the medical report
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'document',
+                  source: {
+                    type: 'base64',
+                    media_type: 'application/pdf',
+                    data: base64Data
+                  }
+                },
+                {
+                  type: 'text',
+                  text: `Analyze this medical report and create a comprehensive personalized diet plan. 
+
+Please extract and analyze:
+1. Key health metrics (blood sugar, cholesterol, vitamins, minerals, etc.)
+2. Medical conditions or concerns identified
+3. Any deficiencies or abnormal values
+
+Then provide a detailed response in JSON format with this structure:
+{
+  "patientInfo": {
+    "conditions": ["list of identified conditions"],
+    "deficiencies": ["list of deficiencies"],
+    "keyMetrics": {"metric": "value and status"}
+  },
+  "dietaryRecommendations": {
+    "foodsToInclude": ["detailed list with reasons"],
+    "foodsToAvoid": ["detailed list with reasons"],
+    "supplementsSuggested": ["list if needed"]
+  },
+  "mealPlan": {
+    "breakfast": ["option 1", "option 2", "option 3"],
+    "lunch": ["option 1", "option 2", "option 3"],
+    "dinner": ["option 1", "option 2", "option 3"],
+    "snacks": ["option 1", "option 2", "option 3"]
+  },
+  "nutritionGuidelines": {
+    "dailyCalories": "recommended range",
+    "macroDistribution": {"protein": "x%", "carbs": "y%", "fats": "z%"},
+    "hydration": "water intake recommendation"
+  },
+  "lifestyle": {
+    "exerciseRecommendations": "exercise suggestions",
+    "sleepGuidelines": "sleep recommendations",
+    "stressManagement": "stress tips"
+  },
+  "warnings": ["important precautions or warnings"],
+  "generalAdvice": "overall health advice"
+}
+
+Ensure all recommendations are evidence-based and appropriate for the conditions identified.`
+                }
+              ]
+            }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!data.content || data.content.length === 0) {
+        throw new Error('No response from AI');
+      }
+
+      // Extract text from response
+      const textContent = data.content
+        .filter(item => item.type === 'text')
+        .map(item => item.text)
+        .join('\n');
+
+      // Parse JSON from the response
+      const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse diet plan from response');
+      }
+
+      const parsedPlan = JSON.parse(jsonMatch[0]);
+      setDietPlan(parsedPlan);
+      setAnalyzing(false);
+      
+    } catch (err) {
+      console.error('Analysis error:', err);
+      setError('Failed to analyze the report. Please try again or ensure the PDF contains medical data.');
+      setAnalyzing(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportToPDF = () => {
+    if (!dietPlan) return;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Personalized Diet Plan</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+            h1 { color: #10b981; border-bottom: 3px solid #10b981; padding-bottom: 10px; }
+            h2 { color: #059669; margin-top: 30px; }
+            h3 { color: #047857; margin-top: 20px; }
+            .section { margin-bottom: 30px; }
+            .warning { background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+            ul { list-style-type: disc; margin-left: 20px; }
+            .metric { background: #f0fdf4; padding: 10px; margin: 5px 0; border-radius: 5px; }
+            .meal-option { background: #f9fafb; padding: 8px; margin: 5px 0; border-left: 3px solid #10b981; }
+          </style>
+        </head>
+        <body>
+          <h1>🍏 Personalized Diet Plan</h1>
+          <p><em>Generated on ${new Date().toLocaleDateString()}</em></p>
+          
+          ${dietPlan.warnings && dietPlan.warnings.length > 0 ? `
+            <div class="warning">
+              <h3>⚠️ Important Warnings</h3>
+              <ul>${dietPlan.warnings.map(w => `<li>${w}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
+          
+          <div class="section">
+            <h2>📊 Health Analysis</h2>
+            <h3>Identified Conditions</h3>
+            <ul>${dietPlan.patientInfo.conditions.map(c => `<li>${c}</li>`).join('')}</ul>
             
-            with open(DIET_PATH) as f:
-                diet_data = json.load(f)
+            ${dietPlan.patientInfo.deficiencies.length > 0 ? `
+              <h3>Deficiencies</h3>
+              <ul>${dietPlan.patientInfo.deficiencies.map(d => `<li>${d}</li>`).join('')}</ul>
+            ` : ''}
             
-            if isinstance(diet_data, list):
-                if len(diet_data) >= 2:
-                    diet_data = {"high_risk": diet_data[0], "low_risk": diet_data[1]}
-                else:
-                    st.error("❌ Diet JSON list must have at least 2 items.")
-                    st.stop()
+            <h3>Key Metrics</h3>
+            ${Object.entries(dietPlan.patientInfo.keyMetrics).map(([k, v]) => 
+              `<div class="metric"><strong>${k}:</strong> ${v}</div>`
+            ).join('')}
+          </div>
+          
+          <div class="section">
+            <h2>🥗 Dietary Recommendations</h2>
+            <h3>Foods to Include</h3>
+            <ul>${dietPlan.dietaryRecommendations.foodsToInclude.map(f => `<li>${f}</li>`).join('')}</ul>
             
-            return model, feature_columns, infer_df, diet_data
-    except Exception as e:
-        st.error(f"❌ Error loading data: {str(e)}")
-        st.stop()
+            <h3>Foods to Avoid</h3>
+            <ul>${dietPlan.dietaryRecommendations.foodsToAvoid.map(f => `<li>${f}</li>`).join('')}</ul>
+            
+            ${dietPlan.dietaryRecommendations.supplementsSuggested.length > 0 ? `
+              <h3>Suggested Supplements</h3>
+              <ul>${dietPlan.dietaryRecommendations.supplementsSuggested.map(s => `<li>${s}</li>`).join('')}</ul>
+            ` : ''}
+          </div>
+          
+          <div class="section">
+            <h2>🍽️ Sample Meal Plan</h2>
+            <h3>Breakfast Options</h3>
+            ${dietPlan.mealPlan.breakfast.map((m, i) => `<div class="meal-option">${i + 1}. ${m}</div>`).join('')}
+            
+            <h3>Lunch Options</h3>
+            ${dietPlan.mealPlan.lunch.map((m, i) => `<div class="meal-option">${i + 1}. ${m}</div>`).join('')}
+            
+            <h3>Dinner Options</h3>
+            ${dietPlan.mealPlan.dinner.map((m, i) => `<div class="meal-option">${i + 1}. ${m}</div>`).join('')}
+            
+            <h3>Snack Options</h3>
+            ${dietPlan.mealPlan.snacks.map((m, i) => `<div class="meal-option">${i + 1}. ${m}</div>`).join('')}
+          </div>
+          
+          <div class="section">
+            <h2>📈 Nutrition Guidelines</h2>
+            <p><strong>Daily Calories:</strong> ${dietPlan.nutritionGuidelines.dailyCalories}</p>
+            <p><strong>Macro Distribution:</strong></p>
+            <ul>
+              ${Object.entries(dietPlan.nutritionGuidelines.macroDistribution).map(([k, v]) => 
+                `<li>${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}</li>`
+              ).join('')}
+            </ul>
+            <p><strong>Hydration:</strong> ${dietPlan.nutritionGuidelines.hydration}</p>
+          </div>
+          
+          <div class="section">
+            <h2>💪 Lifestyle Recommendations</h2>
+            <p><strong>Exercise:</strong> ${dietPlan.lifestyle.exerciseRecommendations}</p>
+            <p><strong>Sleep:</strong> ${dietPlan.lifestyle.sleepGuidelines}</p>
+            <p><strong>Stress Management:</strong> ${dietPlan.lifestyle.stressManagement}</p>
+          </div>
+          
+          <div class="section">
+            <h2>💡 General Advice</h2>
+            <p>${dietPlan.generalAdvice}</p>
+          </div>
+          
+          <hr style="margin-top: 40px; border: none; border-top: 2px solid #e5e7eb;">
+          <p style="text-align: center; color: #6b7280; font-size: 0.9em; margin-top: 20px;">
+            <strong>Disclaimer:</strong> This diet plan is AI-generated based on medical report analysis. 
+            Please consult with healthcare professionals before making significant dietary changes.
+          </p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
 
-try:
-    model, FEATURE_COLUMNS, infer_df, diet_data = load_model_and_data()
-except Exception as e:
-    st.error(f"❌ Failed to initialize application: {str(e)}")
-    st.stop()
+  const exportToJSON = () => {
+    if (!dietPlan) return;
 
-# ================= OPTIMIZED HELPER FUNCTIONS =================
-@st.cache_data(show_spinner=False)
-def prepare_features(df, feature_columns):
-    return df.reindex(columns=feature_columns, fill_value=0)
+    const dataStr = JSON.stringify(dietPlan, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `diet-plan-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
-@st.cache_data(show_spinner=False)
-def predict_risk(df):
-    X = prepare_features(df, FEATURE_COLUMNS)
-    preds = model.predict(X)
-    df_copy = df.copy()
-    df_copy["risk_label"] = ["HIGH DIET RISK" if p==1 else "LOW DIET RISK" for p in preds]
-    return df_copy
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Heart className="w-12 h-12 text-green-600" />
+            <h1 className="text-4xl font-bold text-gray-800">AI Diet Plan Generator</h1>
+          </div>
+          <p className="text-lg text-gray-600">Upload your medical report for personalized nutrition recommendations</p>
+        </div>
 
-try:
-    df_with_risk = predict_risk(infer_df)
-except Exception as e:
-    st.error(f"❌ Error in risk prediction: {str(e)}")
-    st.stop()
+        {/* Upload Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <div className="flex flex-col items-center">
+            <label className="w-full cursor-pointer">
+              <div className="border-3 border-dashed border-green-300 rounded-xl p-12 text-center hover:border-green-500 hover:bg-green-50 transition-all">
+                <Upload className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                <p className="text-xl font-semibold text-gray-700 mb-2">
+                  {file ? file.name : 'Click to upload medical report (PDF)'}
+                </p>
+                <p className="text-sm text-gray-500">Blood tests, health checkups, or medical reports</p>
+              </div>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
 
-# Calculate metrics once
-total_patients = len(df_with_risk)
-high_risk = sum(df_with_risk["risk_label"] == "HIGH DIET RISK")
-low_risk = sum(df_with_risk["risk_label"] == "LOW DIET RISK")
-high_risk_pct = (high_risk / total_patients * 100) if total_patients > 0 else 0
-low_risk_pct = 100 - high_risk_pct
+            {file && !dietPlan && (
+              <button
+                onClick={analyzeMedicalReport}
+                disabled={loading}
+                className="mt-6 bg-green-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-3 transition-all shadow-lg hover:shadow-xl"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    Analyzing Report...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="w-6 h-6" />
+                    Generate Diet Plan
+                  </>
+                )}
+              </button>
+            )}
+          </div>
 
-# ================= SIDEBAR NAVIGATION =================
-with st.sidebar:
-    st.markdown("### 🏥 Navigation")
-    st.markdown("---")
-    page = st.radio("Select Page", ["🏠 Home", "📊 Dashboard"], label_visibility="collapsed")
-    
-    st.markdown("---")
-    st.markdown("### 📊 Quick Status")
-    st.metric("👥 Patients", f"{total_patients:,}")
-    st.metric("🎯 Accuracy", "98.5%")
-    st.markdown(f"**Features:** {len(FEATURE_COLUMNS)}")
-    st.markdown("**Model:** LightGBM")
+          {error && (
+            <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-red-800">{error}</p>
+            </div>
+          )}
+        </div>
 
-# ================= HOME PAGE =================
-if page == "🏠 Home":
-    st.markdown("""
-    <div class="main-header">
-        <h1>🏥 AI Diet Planner</h1>
-        <h3>Personalized Nutrition Plans Based on Medical Intelligence</h3>
-        <p>Revolutionizing healthcare with machine learning</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Feature cards - responsive grid
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="icon">🤖</div>
-            <h3>AI-Powered Analysis</h3>
-            <p>Advanced ML algorithms with 98.5% accuracy</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="icon">🍎</div>
-            <h3>Personalized Plans</h3>
-            <p>Custom recommendations for individual health profiles</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="icon">📈</div>
-            <h3>Real-time Insights</h3>
-            <p>Instant risk assessment and dietary guidelines</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # KPI Cards - 4 columns
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>👥 Patients</p>
-            <h3>{total_patients:,}</h3>
-            <p style="color: #999; font-size: 0.7em;">Total analyzed</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🔴 High Risk</p>
-            <h3>{high_risk:,}</h3>
-            <p class="delta">{high_risk_pct:.1f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🟢 Low Risk</p>
-            <h3>{low_risk:,}</h3>
-            <p class="delta">{low_risk_pct:.1f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown("""
-        <div class="metric-card">
-            <p>🎯 Accuracy</p>
-            <h3>98.5%</h3>
-            <p style="color: #51cf66; font-size: 0.7em; font-weight: 600;">High</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="section-header">📂 Patient Medical Data</div>', unsafe_allow_html=True)
-    
-    with st.container():
-        st.markdown('<div class="content-container">', unsafe_allow_html=True)
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("**Sample of patient medical records:**")
-        with col2:
-            show_all = st.checkbox("Show all", value=False)
-        
-        display_df = infer_df if show_all else infer_df.head(10)
-        st.dataframe(display_df, use_container_width=True, height=250)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="section-header">🔍 Generate Diet Plans</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        if st.button("🚀 Generate Plans for All Patients"):
-            with st.spinner("🧠 Analyzing patient data..."):
-                progress_bar = st.progress(0)
-                progress_text = st.empty()
-                
-                for i, pred in enumerate(df_with_risk["risk_label"]):
-                    progress_bar.progress((i + 1) / len(df_with_risk))
-                    progress_text.text(f"Processing {i+1}/{len(df_with_risk)}")
-                    
-                    diet_key = "high_risk" if pred == "HIGH DIET RISK" else "low_risk"
-                    diet_plan = diet_data[diet_key]
-                    
-                    risk_class = "risk-badge-high" if pred == "HIGH DIET RISK" else "risk-badge-low"
-                    
-                    st.markdown(f"""
-                    <div class="content-container">
-                        <h3 style="color: #4a90e2;">👤 Patient {i+1}</h3>
-                        <span class="{risk_class}">{pred}</span>
+        {/* Analysis Progress */}
+        {analyzing && !dietPlan && (
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div className="text-center">
+              <Loader2 className="w-16 h-16 text-green-600 animate-spin mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Analyzing Your Medical Report</h3>
+              <p className="text-gray-600">AI is extracting health metrics and creating personalized recommendations...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Diet Plan Results */}
+        {dietPlan && (
+          <div className="space-y-6">
+            {/* Export Buttons */}
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={exportToPDF}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2 transition-all shadow-md hover:shadow-lg"
+                >
+                  <FileText className="w-5 h-5" />
+                  Export as PDF
+                </button>
+                <button
+                  onClick={exportToJSON}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 flex items-center gap-2 transition-all shadow-md hover:shadow-lg"
+                >
+                  <Download className="w-5 h-5" />
+                  Export as JSON
+                </button>
+              </div>
+            </div>
+
+            {/* Warnings */}
+            {dietPlan.warnings && dietPlan.warnings.length > 0 && (
+              <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-6 shadow-lg">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-amber-900 mb-2">Important Warnings</h3>
+                    <ul className="list-disc list-inside space-y-1 text-amber-800">
+                      {dietPlan.warnings.map((warning, idx) => (
+                        <li key={idx}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Health Analysis */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <Activity className="w-7 h-7 text-green-600" />
+                Health Analysis
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Identified Conditions</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {dietPlan.patientInfo.conditions.map((condition, idx) => (
+                      <span key={idx} className="bg-red-100 text-red-800 px-4 py-2 rounded-full text-sm font-medium">
+                        {condition}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {dietPlan.patientInfo.deficiencies.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Deficiencies</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {dietPlan.patientInfo.deficiencies.map((def, idx) => (
+                        <span key={idx} className="bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-medium">
+                          {def}
+                        </span>
+                      ))}
                     </div>
-                    """, unsafe_allow_html=True)
-                    
-                    with st.expander(f"📋 View Diet Plan - Patient {i+1}", expanded=False):
-                        st.markdown('<div class="diet-card">', unsafe_allow_html=True)
-                        st.markdown(f"### 🎯 {pred}")
-                        
-                        for day, meals in diet_plan.items():
-                            st.markdown(f"#### 📅 {day}")
-                            if isinstance(meals, dict):
-                                for meal, value in meals.items():
-                                    st.markdown(f"**{meal}:** {value}")
-                            elif isinstance(meals, list):
-                                for item in meals:
-                                    st.markdown(f"• {item}")
-                            else:
-                                st.markdown(f"{meals}")
-                            st.markdown("---")
-                        st.markdown('</div>', unsafe_allow_html=True)
-                
-                progress_text.text("✅ Complete!")
-                time.sleep(1)
-                progress_text.empty()
-                progress_bar.empty()
-    
-    with col2:
-        st.markdown("""
-        <div class="content-container" style="background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%); color: white;">
-            <h4 style="margin: 0 0 8px 0; font-size: 1em;">💡 Pro Tip</h4>
-            <p style="font-size: 0.8em; line-height: 1.4; margin: 0;">
-                Plans are customized based on risk profile and medical indicators.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+                  </div>
+                )}
 
-elif page == "📊 Dashboard":
-    st.markdown("""
-    <div class="main-header">
-        <h1>📊 Analytics Dashboard</h1>
-        <h3>Real-time Patient Risk Monitoring</h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Key Metrics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {Object.entries(dietPlan.patientInfo.keyMetrics).map(([metric, value]) => (
+                      <div key={metric} className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <span className="font-semibold text-gray-700">{metric}:</span>
+                        <span className="text-gray-600 ml-2">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dietary Recommendations */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <Apple className="w-7 h-7 text-green-600" />
+                Dietary Recommendations
+              </h2>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-green-700 mb-3">✅ Foods to Include</h3>
+                  <ul className="space-y-2">
+                    {dietPlan.dietaryRecommendations.foodsToInclude.map((food, idx) => (
+                      <li key={idx} className="bg-green-50 p-3 rounded-lg border-l-4 border-green-500 text-gray-700">
+                        {food}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-red-700 mb-3">❌ Foods to Avoid</h3>
+                  <ul className="space-y-2">
+                    {dietPlan.dietaryRecommendations.foodsToAvoid.map((food, idx) => (
+                      <li key={idx} className="bg-red-50 p-3 rounded-lg border-l-4 border-red-500 text-gray-700">
+                        {food}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {dietPlan.dietaryRecommendations.supplementsSuggested.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-blue-700 mb-3">💊 Suggested Supplements</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {dietPlan.dietaryRecommendations.supplementsSuggested.map((supp, idx) => (
+                      <span key={idx} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+                        {supp}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Meal Plan */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">🍽️ Sample Meal Plan</h2>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                {Object.entries(dietPlan.mealPlan).map(([mealType, options]) => (
+                  <div key={mealType}>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-3 capitalize">
+                      {mealType}
+                    </h3>
+                    <div className="space-y-2">
+                      {options.map((option, idx) => (
+                        <div key={idx} className="bg-gray-50 p-3 rounded-lg border-l-4 border-green-400">
+                          <span className="font-medium text-green-700">Option {idx + 1}:</span>
+                          <span className="text-gray-700 ml-2">{option}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Nutrition Guidelines */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">📈 Nutrition Guidelines</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <span className="font-semibold text-gray-700">Daily Calories:</span>
+                  <span className="text-gray-600 ml-2">{dietPlan.nutritionGuidelines.dailyCalories}</span>
+                </div>
+
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <p className="font-semibold text-gray-700 mb-2">Macro Distribution:</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {Object.entries(dietPlan.nutritionGuidelines.macroDistribution).map(([macro, percentage]) => (
+                      <div key={macro} className="text-center">
+                        <div className="bg-white p-3 rounded-lg shadow-sm">
+                          <p className="text-sm text-gray-600 capitalize">{macro}</p>
+                          <p className="text-xl font-bold text-purple-700">{percentage}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-cyan-50 p-4 rounded-lg">
+                  <span className="font-semibold text-gray-700">Hydration:</span>
+                  <span className="text-gray-600 ml-2">{dietPlan.nutritionGuidelines.hydration}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lifestyle Recommendations */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">💪 Lifestyle Recommendations</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <p className="font-semibold text-gray-700 mb-2">🏃 Exercise:</p>
+                  <p className="text-gray-600">{dietPlan.lifestyle.exerciseRecommendations}</p>
+                </div>
+
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                  <p className="font-semibold text-gray-700 mb-2">😴 Sleep:</p>
+                  <p className="text-gray-600">{dietPlan.lifestyle.sleepGuidelines}</p>
+                </div>
+
+                <div className="bg-pink-50 p-4 rounded-lg">
+                  <p className="font-semibold text-gray-700 mb-2">🧘 Stress Management:</p>
+                  <p className="text-gray-600">{dietPlan.lifestyle.stressManagement}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* General Advice */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-xl p-8 border-2 border-green-200">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">💡 General Advice</h2>
+              <p className="text-gray-700 leading-relaxed">{dietPlan.generalAdvice}</p>
+            </div>
+
+            {/* Disclaimer */}
+            <div className="bg-gray-100 rounded-lg p-6 text-center">
+              <p className="text-sm text-gray-600">
+                <strong>Disclaimer:</strong> This diet plan is AI-generated based on medical report analysis. 
+                Please consult with healthcare professionals before making significant dietary changes.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-    """, unsafe_allow_html=True)
-    
-    # KPI Cards
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>👥 Patients</p>
-            <h3>{total_patients:,}</h3>
-            <p style="color: #999; font-size: 0.7em;">Total</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🔴 High Risk</p>
-            <h3>{high_risk:,}</h3>
-            <p class="delta">{high_risk_pct:.1f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <p>🟢 Low Risk</p>
-            <h3>{low_risk:,}</h3>
-            <p class="delta">{low_risk_pct:.1f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown("""
-        <div class="metric-card">
-            <p>⚡ Speed</p>
-            <h3>&lt; 1s</h3>
-            <p style="color: #999; font-size: 0.7em;">Per patient</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="section-header">📈 Risk Analytics</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        risk_counts = df_with_risk["risk_label"].value_counts().reset_index()
-        risk_counts.columns = ["Risk Level", "Patient Count"]
-        
-        fig_pie = go.Figure(data=[go.Pie(
-            labels=risk_counts["Risk Level"],
-            values=risk_counts["Patient Count"],
-            marker=dict(
-                colors=['#ff6b6b', '#51cf66'],
-                line=dict(color='white', width=2)
-            ),
-            hole=0.5,
-            textinfo='label+percent',
-            textfont=dict(size=12, color='white'),
-            hovertemplate='<b>%{label}</b><br>%{value} patients<extra></extra>'
-        )])
-        
-        fig_pie.update_layout(
-            title_text="<b>Risk Distribution</b>",
-            title_x=0.5,
-            title_font_size=14,
-            showlegend=True,
-            paper_bgcolor='rgba(255,255,255,0.95)',
-            height=320
-        )
-        
-        st.plotly_chart(fig_pie, use_container_width=True)
-    
-    with col2:
-        fig_bar = go.Figure(data=[
-            go.Bar(
-                x=risk_counts["Risk Level"],
-                y=risk_counts["Patient Count"],
-                marker_color=['#ff6b6b', '#51cf66'],
-                marker_line_color='white',
-                marker_line_width=2,
-                text=risk_counts["Patient Count"],
-                textposition='outside',
-                textfont=dict(size=12),
-                hovertemplate='<b>%{x}</b><br>%{y} patients<extra></extra>'
-            )
-        ])
-        
-        fig_bar.update_layout(
-            title_text="<b>Risk Comparison</b>",
-            title_x=0.5,
-            title_font_size=14,
-            xaxis_title="Risk Level",
-            yaxis_title="Patients",
-            paper_bgcolor='rgba(255,255,255,0.95)',
-            height=320
-        )
-        
-        st.plotly_chart(fig_bar, use_container_width=True)
-    
-    st.markdown('<div class="section-header">📋 Patient Risk Analysis</div>', unsafe_allow_html=True)
-    
-    with st.container():
-        st.markdown('<div class="content-container">', unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            risk_filter = st.multiselect(
-                "🔍 Filter by Risk:",
-                options=df_with_risk["risk_label"].unique(),
-                default=df_with_risk["risk_label"].unique()
-            )
-        
-        filtered_df = df_with_risk[df_with_risk["risk_label"].isin(risk_filter)]
-        
-        st.dataframe(filtered_df, use_container_width=True, height=300)
-        
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            csv = filtered_df.to_csv(index=False)
-            st.download_button(
-                label="📥 Download CSV",
-                data=csv,
-                file_name=f"patient_data_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+  );
+};
 
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; margin-top: 15px;">
-    <h3 style="color: #4a90e2; margin-bottom: 8px; font-size: 1.1em;">🏥 AI Diet Planner</h3>
-    <p style="color: #666; font-size: 0.8em; margin-bottom: 5px;">
-        © 2025 AI Diet Planner | ML-Powered Healthcare
-    </p>
-    <p style="color: #999; font-size: 0.75em; margin: 0;">
-        v3.0 | Updated Jan 2025 | 98.5% Accuracy
-    </p>
-</div>
-""", unsafe_allow_html=True)
+export default DietPlanGenerator;
