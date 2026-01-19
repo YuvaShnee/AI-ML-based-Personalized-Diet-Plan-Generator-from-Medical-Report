@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import joblib
@@ -18,37 +19,68 @@ st.set_page_config(
 # ================= CUSTOM CSS =================
 st.markdown("""
 <style>
-    /* Force sidebar to always be visible and expanded */
+    /* Force sidebar to always be visible and expanded - ULTRA AGGRESSIVE */
+    section[data-testid="stSidebar"] {
+        min-width: 300px !important;
+        max-width: 300px !important;
+        width: 300px !important;
+        transform: translateX(0) !important;
+        transition: none !important;
+    }
+    
+    section[data-testid="stSidebar"] > div {
+        min-width: 300px !important;
+        max-width: 300px !important;
+        width: 300px !important;
+        transform: translateX(0) !important;
+    }
+    
     [data-testid="stSidebar"] {
-        min-width: 280px !important;
-        max-width: 280px !important;
-        width: 280px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+        width: 300px !important;
         background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
         border-right: 2px solid #e8efff;
         position: relative !important;
         transform: translateX(0) !important;
-    }
-    
-    [data-testid="stSidebar"][aria-expanded="true"] {
-        min-width: 280px !important;
-        max-width: 280px !important;
-    }
-    
-    [data-testid="stSidebar"][aria-expanded="false"] {
-        min-width: 280px !important;
-        max-width: 280px !important;
+        transition: none !important;
         margin-left: 0 !important;
+    }
+    
+    [data-testid="stSidebar"][aria-expanded="true"],
+    [data-testid="stSidebar"][aria-expanded="false"] {
+        min-width: 300px !important;
+        max-width: 300px !important;
+        width: 300px !important;
+        margin-left: 0 !important;
+        transform: translateX(0) !important;
+    }
+    
+    [data-testid="collapsedControl"] {
+        display: none !important;
     }
     
     /* Ensure sidebar content is always visible */
     [data-testid="stSidebarContent"] {
         width: 100% !important;
         padding: 1rem !important;
+        min-width: 300px !important;
     }
     
-    /* Hide the collapse button to prevent users from minimizing */
-    button[kind="header"] {
+    /* Hide ALL collapse buttons */
+    button[kind="header"],
+    button[data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] button {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    
+    /* Adjust main content to account for fixed sidebar */
+    .main .block-container {
+        padding-left: 2rem !important;
+        max-width: calc(100% - 300px) !important;
     }
     
     .stApp {
@@ -220,16 +252,20 @@ st.markdown("""
     
     /* Responsive adjustments */
     @media (max-width: 1024px) {
+        section[data-testid="stSidebar"],
         [data-testid="stSidebar"] {
-            min-width: 260px !important;
-            max-width: 260px !important;
+            min-width: 300px !important;
+            max-width: 300px !important;
+            width: 300px !important;
         }
     }
     
     @media (max-width: 768px) {
+        section[data-testid="stSidebar"],
         [data-testid="stSidebar"] {
-            min-width: 240px !important;
-            max-width: 240px !important;
+            min-width: 280px !important;
+            max-width: 280px !important;
+            width: 280px !important;
         }
         
         .block-container {
@@ -238,10 +274,63 @@ st.markdown("""
         }
     }
     
+    @media (max-width: 640px) {
+        section[data-testid="stSidebar"],
+        [data-testid="stSidebar"] {
+            min-width: 260px !important;
+            max-width: 260px !important;
+            width: 260px !important;
+        }
+    }
+    
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 </style>
+
+<script>
+// JavaScript to force sidebar to stay open
+document.addEventListener('DOMContentLoaded', function() {
+    const interval = setInterval(function() {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.width = '300px';
+            sidebar.style.minWidth = '300px';
+            sidebar.style.maxWidth = '300px';
+            sidebar.style.transform = 'translateX(0)';
+            sidebar.setAttribute('aria-expanded', 'true');
+            
+            // Remove collapse button if it exists
+            const collapseBtn = document.querySelector('[data-testid="collapsedControl"]');
+            if (collapseBtn) {
+                collapseBtn.style.display = 'none';
+            }
+        }
+    }, 100);
+    
+    // Clear interval after 5 seconds
+    setTimeout(() => clearInterval(interval), 5000);
+});
+
+// Monitor for any changes and force sidebar open
+const observer = new MutationObserver(function(mutations) {
+    const sidebar = document.querySelector('[data-testid="stSidebar"]');
+    if (sidebar) {
+        sidebar.style.width = '300px';
+        sidebar.style.minWidth = '300px';
+        sidebar.style.transform = 'translateX(0)';
+    }
+});
+
+// Start observing when document is ready
+if (document.querySelector('[data-testid="stSidebar"]')) {
+    observer.observe(document.body, { 
+        attributes: true, 
+        childList: true, 
+        subtree: true 
+    });
+}
+</script>
 """, unsafe_allow_html=True)
 
 # ================= PATHS =================
