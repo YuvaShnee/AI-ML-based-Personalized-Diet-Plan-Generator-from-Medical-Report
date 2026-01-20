@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json
 import PyPDF2
@@ -703,7 +704,7 @@ def main():
                     # Download Options
                     st.subheader("📥 Download Your Personalized Plan")
                     
-                    col1, col2, col3 = st.columns([1,1,1])
+                    col1, col2 = st.columns(2)
                     
                     with col1:
                         # JSON Download
@@ -726,7 +727,6 @@ def main():
                             mime="application/pdf",
                             use_container_width=True
                         )
-                    
                     
                     st.markdown("---")
                     st.success("🎉 Your personalized diet plan is ready!")
