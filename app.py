@@ -197,7 +197,7 @@ st.markdown("""
     /* Sidebar */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0D47A1 0%, #1565C0 100%) !important;
-        padding-top: 2rem !important;
+        padding-top: 1.5rem !important;
     }
     
     [data-testid="stSidebar"] * {
@@ -208,6 +208,7 @@ st.markdown("""
         color: white !important;
         border-bottom: 2px solid rgba(255, 255, 255, 0.3);
         padding-bottom: 0.75rem;
+        font-size: 1.3rem !important;
     }
     
     /* Step Cards in Sidebar */
@@ -215,53 +216,84 @@ st.markdown("""
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        padding: 1.25rem;
-        margin: 0.75rem 0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.6rem 0;
     }
     
     .step-card h3 {
         color: white !important;
-        font-size: 1.1rem !important;
-        margin-bottom: 0.5rem !important;
+        font-size: 0.95rem !important;
+        margin-bottom: 0.4rem !important;
+        font-weight: 600 !important;
     }
     
     .step-card p {
         color: rgba(255, 255, 255, 0.9) !important;
-        font-size: 0.9rem !important;
-        line-height: 1.5 !important;
+        font-size: 0.8rem !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
     }
     
     /* Alert Boxes */
     .stAlert {
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         border: none !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        padding: 1rem 1.25rem !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.9rem !important;
     }
     
     .stSuccess {
-        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%) !important;
-        border-left: 4px solid #2E7D32 !important;
+        background: #E8F5E9 !important;
+        border-left: 3px solid #2E7D32 !important;
         color: #1B5E20 !important;
     }
     
+    .stSuccess [data-testid="stMarkdownContainer"] p {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+    
     .stInfo {
-        background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
-        border-left: 4px solid #1565C0 !important;
+        background: #E3F2FD !important;
+        border-left: 3px solid #1565C0 !important;
         color: #0D47A1 !important;
     }
     
+    .stInfo [data-testid="stMarkdownContainer"] p {
+        font-size: 0.85rem !important;
+        line-height: 1.5 !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+    
     .stWarning {
-        background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%) !important;
-        border-left: 4px solid #F57C00 !important;
+        background: #FFF3E0 !important;
+        border-left: 3px solid #F57C00 !important;
         color: #E65100 !important;
     }
     
+    .stWarning [data-testid="stMarkdownContainer"] p {
+        font-size: 0.85rem !important;
+        line-height: 1.5 !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+    
     .stError {
-        background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%) !important;
-        border-left: 4px solid #D32F2F !important;
+        background: #FFEBEE !important;
+        border-left: 3px solid #D32F2F !important;
         color: #B71C1C !important;
+    }
+    
+    .stError [data-testid="stMarkdownContainer"] p {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
     }
     
     /* Expander */
@@ -344,8 +376,27 @@ st.markdown("""
     /* List Items */
     li {
         color: #424242 !important;
-        line-height: 1.8 !important;
-        margin: 0.5rem 0 !important;
+        line-height: 1.6 !important;
+        margin: 0.4rem 0 !important;
+        font-size: 0.9rem !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+    
+    /* Paragraph text fixes */
+    p {
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        hyphens: auto !important;
+    }
+    
+    /* Food list items */
+    .food-item {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+        padding: 0.5rem 0 !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
     }
     
     /* Professional Badge */
@@ -745,10 +796,10 @@ def main():
         """, unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
-        st.info("💡 **Required Metrics:** Your report should contain standard health metrics like BMI, cholesterol, blood sugar, blood pressure, etc.")
+        st.info("💡 **Required Metrics**\n\nYour report should contain standard health metrics like BMI, cholesterol, blood sugar, blood pressure, etc.")
         
         st.markdown("<br>", unsafe_allow_html=True)
-        st.warning("⚠️ **Medical Disclaimer**\n\nThis tool provides general dietary guidance based on extracted health metrics. Always consult qualified healthcare professionals for personalized medical advice and treatment.")
+        st.warning("⚠️ **Medical Disclaimer**\n\nThis tool provides general dietary guidance. Always consult healthcare professionals for personalized medical advice.")
     
     # File upload section
     st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
@@ -834,22 +885,22 @@ def main():
                         with col1:
                             st.markdown("#### 🌅 Breakfast")
                             for item in analysis['meal_plan']['breakfast']:
-                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.3rem 0; line-height: 1.5; font-size: 0.9rem;'>• {item}</p>", unsafe_allow_html=True)
                             
                             st.markdown("<br>", unsafe_allow_html=True)
                             st.markdown("#### ☀️ Lunch")
                             for item in analysis['meal_plan']['lunch']:
-                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.3rem 0; line-height: 1.5; font-size: 0.9rem;'>• {item}</p>", unsafe_allow_html=True)
                         
                         with col2:
                             st.markdown("#### 🌙 Dinner")
                             for item in analysis['meal_plan']['dinner']:
-                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.3rem 0; line-height: 1.5; font-size: 0.9rem;'>• {item}</p>", unsafe_allow_html=True)
                             
                             st.markdown("<br>", unsafe_allow_html=True)
                             st.markdown("#### 🎁 Healthy Snacks")
                             for item in analysis['meal_plan']['snacks']:
-                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.3rem 0; line-height: 1.5; font-size: 0.9rem;'>• {item}</p>", unsafe_allow_html=True)
                         st.markdown("</div>", unsafe_allow_html=True)
                         
                         st.markdown("<br>", unsafe_allow_html=True)
@@ -878,12 +929,12 @@ def main():
                         with col1:
                             st.markdown("#### ✅ Foods to Include")
                             for food in nutrition['foods_to_include']:
-                                st.success(f"✓ {food}")
+                                st.markdown(f"<div class='food-item' style='background: #E8F5E9; padding: 0.6rem; border-radius: 6px; margin: 0.4rem 0; color: #1B5E20;'>✓ {food}</div>", unsafe_allow_html=True)
                         
                         with col2:
                             st.markdown("#### ❌ Foods to Avoid")
                             for food in nutrition['foods_to_avoid']:
-                                st.error(f"✗ {food}")
+                                st.markdown(f"<div class='food-item' style='background: #FFEBEE; padding: 0.6rem; border-radius: 6px; margin: 0.4rem 0; color: #B71C1C;'>✗ {food}</div>", unsafe_allow_html=True)
                         st.markdown("</div>", unsafe_allow_html=True)
                         
                         st.markdown("<br>", unsafe_allow_html=True)
@@ -898,12 +949,12 @@ def main():
                         with col1:
                             st.markdown("#### 🏃 Exercise Plan")
                             for exercise in lifestyle['exercise']:
-                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {exercise}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.3rem 0; line-height: 1.5; font-size: 0.9rem;'>• {exercise}</p>", unsafe_allow_html=True)
                             
                             st.markdown("<br>", unsafe_allow_html=True)
                             st.markdown("#### 😌 Stress Management")
                             for tip in lifestyle['stress_management']:
-                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {tip}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.3rem 0; line-height: 1.5; font-size: 0.9rem;'>• {tip}</p>", unsafe_allow_html=True)
                         
                         with col2:
                             st.markdown("#### 😴 Sleep Recommendation")
