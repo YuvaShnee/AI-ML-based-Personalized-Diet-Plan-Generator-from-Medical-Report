@@ -17,189 +17,363 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for professional styling
+# Custom CSS for professional medical website styling
 st.markdown("""
 <style>
-    /* Main color scheme - Medical Blue & Green */
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Main color scheme - Professional Medical */
     :root {
-        --primary-color: #0066CC;
-        --secondary-color: #00A86B;
-        --accent-color: #FF6B6B;
-        --background-light: #F0F8FF;
-        --text-dark: #2C3E50;
+        --primary-blue: #1565C0;
+        --secondary-green: #2E7D32;
+        --accent-teal: #00897B;
+        --light-bg: #FAFAFA;
+        --card-bg: #FFFFFF;
+        --text-primary: #212121;
+        --text-secondary: #757575;
+        --border-color: #E0E0E0;
     }
     
-    /* Main container styling */
+    /* Global font */
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+    
+    /* Main container */
     .main {
-        background: linear-gradient(135deg, #E3F2FD 0%, #F1F8E9 100%);
+        background: linear-gradient(to bottom, #F5F7FA 0%, #FFFFFF 100%);
+        padding: 0 !important;
     }
     
-    /* Header styling */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1200px !important;
+    }
+    
+    /* Headers */
     h1 {
-        color: #0066CC !important;
+        color: #1565C0 !important;
         font-weight: 700 !important;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        padding: 20px 0;
-        border-bottom: 4px solid #00A86B;
+        font-size: 2.5rem !important;
+        letter-spacing: -0.5px !important;
+        margin-bottom: 0.5rem !important;
     }
     
     h2 {
-        color: #00A86B !important;
+        color: #2E7D32 !important;
         font-weight: 600 !important;
-        margin-top: 20px !important;
+        font-size: 1.75rem !important;
+        margin-top: 2rem !important;
+        margin-bottom: 1rem !important;
     }
     
     h3 {
-        color: #0066CC !important;
-        font-weight: 500 !important;
+        color: #1565C0 !important;
+        font-weight: 600 !important;
+        font-size: 1.25rem !important;
     }
     
     h4 {
-        color: #2C3E50 !important;
-        font-weight: 500 !important;
+        color: #424242 !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 0.75rem !important;
     }
     
-    /* Card styling for sections */
-    .stAlert {
-        border-radius: 15px !important;
-        border-left: 5px solid #00A86B !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    /* Professional Cards */
+    .medical-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E8EAF6;
+        margin: 1.5rem 0;
+        transition: box-shadow 0.3s ease;
     }
     
-    /* Metric cards */
-    [data-testid="stMetricValue"] {
-        font-size: 28px !important;
+    .medical-card:hover {
+        box-shadow: 0 4px 16px rgba(21, 101, 192, 0.12);
+    }
+    
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(21, 101, 192, 0.2);
+    }
+    
+    .hero-title {
+        color: white !important;
+        font-size: 2.75rem !important;
         font-weight: 700 !important;
-        color: #0066CC !important;
+        margin-bottom: 1rem !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .hero-subtitle {
+        color: #E3F2FD !important;
+        font-size: 1.25rem !important;
+        font-weight: 400 !important;
+        line-height: 1.6 !important;
+    }
+    
+    /* Metric Cards */
+    [data-testid="stMetricValue"] {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        color: #1565C0 !important;
     }
     
     [data-testid="stMetricLabel"] {
-        font-size: 16px !important;
+        font-size: 0.95rem !important;
         font-weight: 600 !important;
-        color: #2C3E50 !important;
+        color: #424242 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
     }
     
-    /* Button styling */
+    div[data-testid="stMetricDelta"] {
+        display: none !important;
+    }
+    
+    /* Buttons */
     .stButton > button {
-        background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%) !important;
+        background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%) !important;
         color: white !important;
-        border-radius: 25px !important;
-        padding: 12px 30px !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 2rem !important;
         font-weight: 600 !important;
+        font-size: 1rem !important;
         border: none !important;
-        box-shadow: 0 4px 15px rgba(0,102,204,0.3) !important;
+        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.25) !important;
         transition: all 0.3s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(0,102,204,0.4) !important;
+        background: linear-gradient(135deg, #0D47A1 0%, #01579B 100%) !important;
+        box-shadow: 0 6px 16px rgba(21, 101, 192, 0.35) !important;
+        transform: translateY(-1px) !important;
     }
     
     .stDownloadButton > button {
-        background: linear-gradient(135deg, #00A86B 0%, #008556 100%) !important;
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%) !important;
         color: white !important;
-        border-radius: 25px !important;
-        padding: 12px 30px !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 2rem !important;
         font-weight: 600 !important;
         border: none !important;
-        box-shadow: 0 4px 15px rgba(0,168,107,0.3) !important;
+        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25) !important;
+        transition: all 0.3s ease !important;
     }
     
     .stDownloadButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(0,168,107,0.4) !important;
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%) !important;
+        box-shadow: 0 6px 16px rgba(46, 125, 50, 0.35) !important;
+        transform: translateY(-1px) !important;
     }
     
-    /* File uploader styling */
+    /* File Uploader */
     [data-testid="stFileUploader"] {
         background: white !important;
-        border-radius: 15px !important;
-        padding: 20px !important;
-        border: 2px dashed #0066CC !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+        border-radius: 12px !important;
+        padding: 2rem !important;
+        border: 2px dashed #1565C0 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* Sidebar styling */
+    [data-testid="stFileUploader"] label {
+        color: #1565C0 !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Sidebar */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0066CC 0%, #0052A3 100%) !important;
+        background: linear-gradient(180deg, #0D47A1 0%, #1565C0 100%) !important;
+        padding-top: 2rem !important;
     }
     
     [data-testid="stSidebar"] * {
         color: white !important;
     }
     
-    [data-testid="stSidebar"] .stMarkdown {
+    [data-testid="stSidebar"] h2 {
         color: white !important;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 0.75rem;
     }
     
-    /* Info boxes */
-    .stInfo {
-        background-color: #E3F2FD !important;
-        border-left: 5px solid #0066CC !important;
+    /* Step Cards in Sidebar */
+    .step-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin: 0.75rem 0;
+    }
+    
+    .step-card h3 {
+        color: white !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .step-card p {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* Alert Boxes */
+    .stAlert {
         border-radius: 10px !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        padding: 1rem 1.25rem !important;
     }
     
     .stSuccess {
-        background-color: #E8F5E9 !important;
-        border-left: 5px solid #00A86B !important;
-        border-radius: 10px !important;
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%) !important;
+        border-left: 4px solid #2E7D32 !important;
+        color: #1B5E20 !important;
+    }
+    
+    .stInfo {
+        background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
+        border-left: 4px solid #1565C0 !important;
+        color: #0D47A1 !important;
     }
     
     .stWarning {
-        background-color: #FFF3E0 !important;
-        border-left: 5px solid #FF9800 !important;
-        border-radius: 10px !important;
+        background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%) !important;
+        border-left: 4px solid #F57C00 !important;
+        color: #E65100 !important;
     }
     
     .stError {
-        background-color: #FFEBEE !important;
-        border-left: 5px solid #FF6B6B !important;
-        border-radius: 10px !important;
+        background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%) !important;
+        border-left: 4px solid #D32F2F !important;
+        color: #B71C1C !important;
     }
     
-    /* Expander styling */
+    /* Expander */
     .streamlit-expanderHeader {
-        background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
-        border-radius: 10px !important;
+        background: white !important;
+        border: 1px solid #E0E0E0 !important;
+        border-radius: 8px !important;
         font-weight: 600 !important;
-        color: #0066CC !important;
+        color: #424242 !important;
+        padding: 1rem !important;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        border-color: #1565C0 !important;
+        background: #F5F7FA !important;
     }
     
     /* Divider */
     hr {
         border: none !important;
-        height: 3px !important;
-        background: linear-gradient(90deg, #0066CC 0%, #00A86B 100%) !important;
-        margin: 30px 0 !important;
-        border-radius: 5px !important;
+        height: 2px !important;
+        background: linear-gradient(90deg, #1565C0 0%, #2E7D32 50%, #00897B 100%) !important;
+        margin: 2.5rem 0 !important;
+        opacity: 0.3 !important;
     }
     
-    /* Custom card class */
-    .custom-card {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-        margin: 15px 0;
-        border-left: 5px solid #00A86B;
-        transition: transform 0.3s ease;
+    /* Section Headers */
+    .section-header {
+        background: linear-gradient(135deg, #E3F2FD 0%, #E8F5E9 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 5px solid #1565C0;
+        margin: 2rem 0 1.5rem 0;
     }
     
-    .custom-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    .section-header h2 {
+        margin: 0 !important;
+        color: #1565C0 !important;
     }
     
-    /* Text area */
+    /* Text Areas */
     .stTextArea textarea {
-        border-radius: 10px !important;
-        border: 2px solid #E3F2FD !important;
+        border-radius: 8px !important;
+        border: 2px solid #E0E0E0 !important;
+        font-family: 'Monaco', 'Courier New', monospace !important;
+        font-size: 0.875rem !important;
     }
     
-    /* Spinner */
+    .stTextArea textarea:focus {
+        border-color: #1565C0 !important;
+        box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.1) !important;
+    }
+    
+    /* Loading Spinner */
     .stSpinner > div {
-        border-top-color: #0066CC !important;
+        border-top-color: #1565C0 !important;
+    }
+    
+    /* Footer */
+    .footer-section {
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        padding: 2.5rem;
+        border-radius: 12px;
+        margin: 2rem 0;
+        text-align: center;
+        border: 2px solid #2E7D32;
+    }
+    
+    .footer-section h2 {
+        color: #2E7D32 !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .footer-section p {
+        color: #1B5E20;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+    
+    /* List Items */
+    li {
+        color: #424242 !important;
+        line-height: 1.8 !important;
+        margin: 0.5rem 0 !important;
+    }
+    
+    /* Professional Badge */
+    .metric-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin: 0.25rem;
+    }
+    
+    .badge-high {
+        background: #FFEBEE;
+        color: #C62828;
+        border: 1px solid #EF9A9A;
+    }
+    
+    .badge-normal {
+        background: #E8F5E9;
+        color: #2E7D32;
+        border: 1px solid #A5D6A7;
+    }
+    
+    .badge-low {
+        background: #FFF3E0;
+        color: #EF6C00;
+        border: 1px solid #FFCC80;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -450,7 +624,7 @@ def analyze_medical_report(report_text):
 
 # Display health metrics with color coding
 def display_health_metrics(metrics):
-    st.markdown("## 🩺 Health Status Assessment")
+    st.markdown("<div class='section-header'><h2>🩺 Health Status Assessment</h2></div>", unsafe_allow_html=True)
     
     cols = st.columns(4)
     
@@ -483,7 +657,7 @@ def generate_pdf_report(data):
         'CustomTitle',
         parent=styles['Heading1'],
         fontSize=24,
-        textColor=colors.HexColor('#0066CC'),
+        textColor=colors.HexColor('#1565C0'),
         spaceAfter=30
     )
     story.append(Paragraph("Medical Diet Plan Report", title_style))
@@ -535,107 +709,114 @@ def generate_pdf_report(data):
 def main():
     # Hero Section
     st.markdown("""
-    <div style='text-align: center; padding: 20px 0;'>
-        <h1 style='font-size: 48px; margin-bottom: 10px;'>🏥 AI Medical Diet Plan Generator</h1>
-        <p style='font-size: 20px; color: #555; margin-bottom: 30px;'>
-            Transform your medical reports into personalized nutrition plans with AI
+    <div class='hero-section'>
+        <h1 class='hero-title'>🏥 AI Medical Diet Plan Generator</h1>
+        <p class='hero-subtitle'>
+            Transform your medical reports into evidence-based, personalized nutrition plans
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    
     # Sidebar
     with st.sidebar:
-        st.markdown("<h2 style='text-align: center; color: white !important;'>📋 Getting Started</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>📋 How It Works</h2>", unsafe_allow_html=True)
         st.markdown("---")
+        
         st.markdown("""
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 10px 0;'>
-            <h3 style='color: white !important;'>📤 Step 1</h3>
-            <p style='color: white !important;'>Upload your medical report (PDF format)</p>
+        <div class='step-card'>
+            <h3>📤 Step 1</h3>
+            <p>Upload your medical report in PDF format</p>
         </div>
         
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 10px 0;'>
-            <h3 style='color: white !important;'>🔍 Step 2</h3>
-            <p style='color: white !important;'>Our AI extracts health metrics automatically</p>
+        <div class='step-card'>
+            <h3>🔍 Step 2</h3>
+            <p>AI extracts health metrics automatically</p>
         </div>
         
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 10px 0;'>
-            <h3 style='color: white !important;'>🍽️ Step 3</h3>
-            <p style='color: white !important;'>Get your personalized diet plan</p>
+        <div class='step-card'>
+            <h3>🍽️ Step 3</h3>
+            <p>Receive your personalized diet plan</p>
         </div>
         
-        <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 10px 0;'>
-            <h3 style='color: white !important;'>📥 Step 4</h3>
-            <p style='color: white !important;'>Download your custom report</p>
+        <div class='step-card'>
+            <h3>📥 Step 4</h3>
+            <p>Download your comprehensive report</p>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("---")
-        st.info("💡 **Tip:** Your report should contain standard health metrics like BMI, cholesterol, blood sugar, etc.")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.info("💡 **Required Metrics:** Your report should contain standard health metrics like BMI, cholesterol, blood sugar, blood pressure, etc.")
         
-        st.markdown("---")
-        st.warning("⚠️ **Medical Disclaimer**\n\nThis tool provides general dietary guidance based on your health metrics. Always consult qualified healthcare professionals for personalized medical advice and treatment.")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.warning("⚠️ **Medical Disclaimer**\n\nThis tool provides general dietary guidance based on extracted health metrics. Always consult qualified healthcare professionals for personalized medical advice and treatment.")
     
     # File upload section
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
     st.markdown("### 📄 Upload Your Medical Report")
+    st.markdown("<p style='color: #757575; margin-bottom: 1rem;'>Select a PDF file containing your laboratory test results and health metrics</p>", unsafe_allow_html=True)
+    
     uploaded_file = st.file_uploader(
-        "Choose a PDF file containing your medical test results", 
+        "Choose PDF file", 
         type=['pdf'],
-        help="Upload a PDF file with your lab results and health metrics"
+        help="Upload a PDF file with your lab results and health metrics",
+        label_visibility="collapsed"
     )
     st.markdown("</div>", unsafe_allow_html=True)
     
     if uploaded_file:
-        with st.spinner("🔍 Reading your medical report..."):
+        with st.spinner("🔍 Processing your medical report..."):
             report_text = extract_text_from_pdf(uploaded_file)
         
         if report_text:
-            st.success("✅ Medical report uploaded successfully!")
+            st.success("✅ Medical report uploaded and processed successfully")
             
-            with st.expander("📄 View Extracted Text"):
-                st.text_area("Report Content", report_text[:1000] + "..." if len(report_text) > 1000 else report_text, height=200)
+            with st.expander("📄 View Extracted Report Text", expanded=False):
+                st.text_area(
+                    "Report Content", 
+                    report_text[:1000] + "..." if len(report_text) > 1000 else report_text, 
+                    height=200,
+                    label_visibility="collapsed"
+                )
             
             st.markdown("<br>", unsafe_allow_html=True)
             
             col1, col2, col3 = st.columns([1,2,1])
             with col2:
                 if st.button("🚀 Generate Personalized Diet Plan", type="primary", use_container_width=True):
-                    with st.spinner("🔬 Analyzing your health metrics and creating personalized recommendations..."):
+                    with st.spinner("🔬 Analyzing health data and generating recommendations..."):
                         analysis = analyze_medical_report(report_text)
                     
                     if analysis:
-                        st.balloons()
                         st.success("✅ Analysis complete! Your personalized plan is ready.")
-                        st.markdown("---")
+                        st.markdown("<br>", unsafe_allow_html=True)
                         
                         # Patient Information
-                        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                        st.markdown("## 👤 Patient Information")
+                        st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-header'><h2>👤 Patient Information</h2></div>", unsafe_allow_html=True)
                         col1, col2, col3 = st.columns(3)
                         with col1:
                             st.metric("📝 Name", analysis['patient_info']['name'])
                         with col2:
-                            st.metric("🎂 Age", f"{analysis['patient_info']['age']} years")
+                            st.metric("🎂 Age", f"{analysis['patient_info']['age']} years" if analysis['patient_info']['age'] > 0 else "N/A")
                         with col3:
                             st.metric("⚧ Gender", analysis['patient_info']['gender'])
                         st.markdown("</div>", unsafe_allow_html=True)
                         
-                        st.markdown("---")
+                        st.markdown("<br>", unsafe_allow_html=True)
                         
                         # Health Metrics
                         if analysis['health_metrics']:
-                            st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                            st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
                             display_health_metrics(analysis['health_metrics'])
                             st.markdown("</div>", unsafe_allow_html=True)
-                            st.markdown("---")
                         else:
-                            st.warning("⚠️ No health metrics detected in the report. Please ensure your PDF contains standard lab values.")
+                            st.warning("⚠️ No health metrics detected in the report. Please ensure your PDF contains standard laboratory values.")
+                        
+                        st.markdown("<br>", unsafe_allow_html=True)
                         
                         # Diagnoses
-                        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                        st.markdown("## 🏥 Health Assessment")
+                        st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-header'><h2>🏥 Health Assessment</h2></div>", unsafe_allow_html=True)
                         for diag in analysis['diagnoses']:
                             if "No significant" in diag:
                                 st.success(f"✅ {diag}")
@@ -643,40 +824,43 @@ def main():
                                 st.warning(f"⚠️ {diag}")
                         st.markdown("</div>", unsafe_allow_html=True)
                         
-                        st.markdown("---")
+                        st.markdown("<br>", unsafe_allow_html=True)
                         
                         # Meal Plan
-                        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                        st.markdown("## 🍽️ Personalized Meal Plan")
+                        st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-header'><h2>🍽️ Personalized Meal Plan</h2></div>", unsafe_allow_html=True)
                         
                         col1, col2 = st.columns(2)
                         with col1:
                             st.markdown("#### 🌅 Breakfast")
                             for item in analysis['meal_plan']['breakfast']:
-                                st.markdown(f"<p style='color: #2C3E50; padding: 5px 0;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
                             
+                            st.markdown("<br>", unsafe_allow_html=True)
                             st.markdown("#### ☀️ Lunch")
                             for item in analysis['meal_plan']['lunch']:
-                                st.markdown(f"<p style='color: #2C3E50; padding: 5px 0;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
                         
                         with col2:
                             st.markdown("#### 🌙 Dinner")
                             for item in analysis['meal_plan']['dinner']:
-                                st.markdown(f"<p style='color: #2C3E50; padding: 5px 0;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
                             
-                            st.markdown("#### 🎁 Snacks")
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            st.markdown("#### 🎁 Healthy Snacks")
                             for item in analysis['meal_plan']['snacks']:
-                                st.markdown(f"<p style='color: #2C3E50; padding: 5px 0;'>• {item}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {item}</p>", unsafe_allow_html=True)
                         st.markdown("</div>", unsafe_allow_html=True)
                         
-                        st.markdown("---")
+                        st.markdown("<br>", unsafe_allow_html=True)
                         
                         # Nutrition Guidelines
-                        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                        st.markdown("## 📈 Daily Nutrition Targets")
+                        st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-header'><h2>📈 Daily Nutrition Targets</h2></div>", unsafe_allow_html=True)
                         
                         nutrition = analysis['nutrition_guidelines']
                         
+                        st.markdown("<br>", unsafe_allow_html=True)
                         col1, col2, col3 = st.columns(3)
                         with col1:
                             st.metric("🔥 Calories", f"{nutrition['daily_calories']} kcal")
@@ -688,7 +872,7 @@ def main():
                             st.metric("🌾 Fiber", f"{nutrition['fiber_g']}g")
                             st.metric("🧂 Sodium", f"{nutrition['sodium_mg']}mg")
                         
-                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown("<br><br>", unsafe_allow_html=True)
                         
                         col1, col2 = st.columns(2)
                         with col1:
@@ -702,11 +886,11 @@ def main():
                                 st.error(f"✗ {food}")
                         st.markdown("</div>", unsafe_allow_html=True)
                         
-                        st.markdown("---")
+                        st.markdown("<br>", unsafe_allow_html=True)
                         
                         # Lifestyle Recommendations
-                        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                        st.markdown("## 💪 Lifestyle Recommendations")
+                        st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-header'><h2>💪 Lifestyle Recommendations</h2></div>", unsafe_allow_html=True)
                         
                         lifestyle = analysis['lifestyle_recommendations']
                         
@@ -714,11 +898,12 @@ def main():
                         with col1:
                             st.markdown("#### 🏃 Exercise Plan")
                             for exercise in lifestyle['exercise']:
-                                st.markdown(f"<p style='color: #2C3E50; padding: 5px 0;'>• {exercise}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {exercise}</p>", unsafe_allow_html=True)
                             
+                            st.markdown("<br>", unsafe_allow_html=True)
                             st.markdown("#### 😌 Stress Management")
                             for tip in lifestyle['stress_management']:
-                                st.markdown(f"<p style='color: #2C3E50; padding: 5px 0;'>• {tip}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='color: #424242; padding: 0.4rem 0; line-height: 1.6;'>• {tip}</p>", unsafe_allow_html=True)
                         
                         with col2:
                             st.markdown("#### 😴 Sleep Recommendation")
@@ -728,16 +913,16 @@ def main():
                             st.info(lifestyle['hydration'])
                         st.markdown("</div>", unsafe_allow_html=True)
                         
-                        st.markdown("---")
+                        st.markdown("<br>", unsafe_allow_html=True)
                         
                         # Download Options
-                        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                        st.markdown("## 📥 Download Your Personalized Plan")
+                        st.markdown("<div class='medical-card'>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-header'><h2>📥 Download Your Plan</h2></div>", unsafe_allow_html=True)
+                        st.markdown("<p style='color: #757575; margin-bottom: 1.5rem;'>Save your personalized diet plan in your preferred format</p>", unsafe_allow_html=True)
                         
-                        col1, col2, col3 = st.columns([1,1,1])
+                        col1, col2, col3 = st.columns(3)
                         
                         with col1:
-                            # JSON Download
                             json_str = json.dumps(analysis, indent=2)
                             st.download_button(
                                 label="📄 Download JSON",
@@ -748,7 +933,6 @@ def main():
                             )
                         
                         with col2:
-                            # PDF Download
                             pdf_buffer = generate_pdf_report(analysis)
                             st.download_button(
                                 label="📑 Download PDF",
@@ -759,18 +943,19 @@ def main():
                             )
                         
                         with col3:
-                            # Share button (placeholder)
-                            if st.button("📤 Share Report", use_container_width=True):
-                                st.info("💡 You can share the downloaded PDF with your doctor or nutritionist!")
+                            if st.button("📤 Share Info", use_container_width=True):
+                                st.info("💡 Share the downloaded PDF with your doctor or nutritionist for professional guidance!")
                         st.markdown("</div>", unsafe_allow_html=True)
                         
-                        st.markdown("---")
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        
+                        # Success Footer
                         st.markdown("""
-                        <div style='text-align: center; background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); 
-                                    padding: 30px; border-radius: 15px; margin: 20px 0;'>
-                            <h2 style='color: #00A86B;'>🎉 Your Personalized Diet Plan is Ready!</h2>
-                            <p style='color: #2C3E50; font-size: 18px;'>
-                                Follow these recommendations and consult with your healthcare provider for best results.
+                        <div class='footer-section'>
+                            <h2>🎉 Your Personalized Diet Plan is Ready!</h2>
+                            <p>
+                                Follow these evidence-based recommendations and consult with your healthcare provider 
+                                for optimal results. Remember, consistency is key to achieving your health goals.
                             </p>
                         </div>
                         """, unsafe_allow_html=True)
