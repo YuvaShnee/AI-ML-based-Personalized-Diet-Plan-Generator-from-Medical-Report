@@ -727,10 +727,6 @@ def main():
                             use_container_width=True
                         )
                     
-                    with col3:
-                        # Share button (placeholder)
-                        if st.button("📤 Share Report", use_container_width=True):
-                            st.info("💡 You can share the downloaded PDF with your doctor or nutritionist!")
                     
                     st.markdown("---")
                     st.success("🎉 Your personalized diet plan is ready!")
