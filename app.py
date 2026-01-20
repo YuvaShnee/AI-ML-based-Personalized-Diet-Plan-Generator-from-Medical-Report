@@ -24,6 +24,15 @@ st.markdown("""
         background: linear-gradient(135deg, #E8EAF6 0%, #F3E5F5 50%, #E1F5FE 100%);
     }
     
+    /* Responsive container */
+    .block-container {
+        max-width: 1200px;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
+    
     /* Sidebar background */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1565C0 0%, #0D47A1 100%);
@@ -32,7 +41,7 @@ st.markdown("""
     /* Cards and containers */
     [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
         background-color: rgba(255, 255, 255, 0.9);
-        padding: 1.5rem;
+        padding: 1rem;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
@@ -40,7 +49,7 @@ st.markdown("""
     /* File uploader styling */
     [data-testid="stFileUploader"] {
         background-color: white;
-        padding: 2rem;
+        padding: 1.5rem;
         border-radius: 12px;
         border: 2px dashed #1565C0;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -49,23 +58,54 @@ st.markdown("""
     /* Metric containers */
     [data-testid="stMetric"] {
         background-color: white;
-        padding: 1rem;
+        padding: 0.75rem;
         border-radius: 8px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Adjust metric value size */
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-size: 0.85rem !important;
     }
     
     /* Headers styling */
     h1 {
         color: #1565C0;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        font-size: 2rem !important;
+        margin-bottom: 0.5rem !important;
     }
     
     h2 {
         color: #2E7D32;
+        font-size: 1.5rem !important;
+        margin-top: 1rem !important;
     }
     
     h3 {
         color: #1565C0;
+        font-size: 1.2rem !important;
+    }
+    
+    h4 {
+        font-size: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Paragraph and text sizing */
+    p {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* List items */
+    li {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
     }
     
     /* Button styling */
@@ -76,6 +116,8 @@ st.markdown("""
         border: none;
         box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
         font-weight: 600;
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
         transition: all 0.3s ease;
     }
     
@@ -91,6 +133,8 @@ st.markdown("""
         border: none;
         box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
         font-weight: 600;
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
     }
     
     .stDownloadButton > button:hover {
@@ -103,24 +147,32 @@ st.markdown("""
         background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
         border-left: 4px solid #2E7D32;
         border-radius: 8px;
+        padding: 0.75rem !important;
+        font-size: 0.9rem !important;
     }
     
     .stInfo {
         background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
         border-left: 4px solid #1565C0;
         border-radius: 8px;
+        padding: 0.75rem !important;
+        font-size: 0.85rem !important;
     }
     
     .stWarning {
         background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
         border-left: 4px solid #F57C00;
         border-radius: 8px;
+        padding: 0.75rem !important;
+        font-size: 0.85rem !important;
     }
     
     .stError {
         background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
         border-left: 4px solid #D32F2F;
         border-radius: 8px;
+        padding: 0.75rem !important;
+        font-size: 0.9rem !important;
     }
     
     /* Expander */
@@ -128,6 +180,13 @@ st.markdown("""
         background-color: white;
         border-radius: 8px;
         border: 1px solid #E0E0E0;
+        font-size: 0.9rem !important;
+        padding: 0.75rem !important;
+    }
+    
+    /* Text area */
+    .stTextArea textarea {
+        font-size: 0.85rem !important;
     }
     
     /* Divider */
@@ -136,6 +195,26 @@ st.markdown("""
         height: 2px;
         background: linear-gradient(90deg, #1565C0 0%, #2E7D32 50%, #00897B 100%);
         opacity: 0.5;
+        margin: 1.5rem 0 !important;
+    }
+    
+    /* Sidebar text sizing */
+    [data-testid="stSidebar"] .stMarkdown {
+        font-size: 0.85rem !important;
+    }
+    
+    [data-testid="stSidebar"] h2 {
+        font-size: 1.3rem !important;
+    }
+    
+    /* Spacing adjustments */
+    .element-container {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Column spacing */
+    [data-testid="column"] {
+        padding: 0 0.5rem;
     }
 </style>
 """, unsafe_allow_html=True)
