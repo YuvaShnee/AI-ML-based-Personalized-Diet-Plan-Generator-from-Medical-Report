@@ -154,3 +154,4 @@ Cloud deployment (AWS / Streamlit Cloud)
 Multi-language support
 
 AI chatbot for diet guidance
+Added project overview and workflow explanation
