@@ -219,10 +219,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Extract text from PDF - Updated to handle any filename
+# Extract text from PDF - Updated to handle any filename and various PDF formats
 def extract_text_from_pdf(pdf_file):
     """
     Extract text from PDF file with any filename.
+    Handles both text-based and scanned (image-based) PDFs.
     
     Args:
         pdf_file: UploadedFile object from Streamlit file uploader
@@ -238,31 +239,55 @@ def extract_text_from_pdf(pdf_file):
         # Reset file pointer to beginning
         pdf_file.seek(0)
         
-        # Read PDF
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        # Read the file content into bytes
+        pdf_bytes = pdf_file.read()
         
-        # Get number of pages
-        num_pages = len(pdf_reader.pages)
-        st.info(f"📃 Found {num_pages} page(s) in the document")
+        # Reset file pointer again
+        pdf_file.seek(0)
         
-        # Extract text from all pages
-        text = ""
-        for page_num, page in enumerate(pdf_reader.pages, 1):
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
-        
-        if not text.strip():
-            st.error("⚠️ No text could be extracted from the PDF. Please ensure the PDF contains readable text.")
+        # Try to read with PyPDF2
+        try:
+            pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_bytes))
+            
+            # Get number of pages
+            num_pages = len(pdf_reader.pages)
+            st.info(f"📃 Found {num_pages} page(s) in the document")
+            
+            # Extract text from all pages
+            text = ""
+            for page_num, page in enumerate(pdf_reader.pages, 1):
+                try:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+                except Exception as e:
+                    st.warning(f"⚠️ Could not extract text from page {page_num}: {str(e)}")
+                    continue
+            
+            # If we got some text, return it
+            if text.strip():
+                st.success(f"✅ Successfully extracted text from **{filename}**")
+                return text
+            else:
+                # No text extracted - might be a scanned PDF
+                st.warning("⚠️ No text could be extracted using standard method.")
+                st.info("🔍 This appears to be a scanned/image-based PDF.")
+                st.markdown("""
+                **Possible solutions:**
+                - Convert the PDF to a text-based format
+                - Use OCR software to extract text first
+                - Re-upload a text-based PDF version of your medical report
+                - Alternatively, you can manually enter the key metrics below
+                """)
+                return None
+                
+        except PyPDF2.errors.PdfReadError as e:
+            st.error(f"❌ Error reading PDF: The file might be corrupted or password-protected. Error: {str(e)}")
             return None
             
-        return text
-        
-    except PyPDF2.errors.PdfReadError as e:
-        st.error(f"❌ Error reading PDF: The file might be corrupted or password-protected. Error: {str(e)}")
-        return None
     except Exception as e:
-        st.error(f"❌ Unexpected error reading PDF '{pdf_file.name}': {str(e)}")
+        st.error(f"❌ Unexpected error processing PDF '{pdf_file.name}': {str(e)}")
+        st.info("💡 Please ensure the PDF file is valid and not corrupted.")
         return None
 
 # Extract health metrics using regex patterns
@@ -772,6 +797,8 @@ def main():
                     
                     st.markdown("---")
                     st.success("🎉 Your personalized diet plan is ready!")
+        else:
+            st.info("💡 Unable to extract text from the PDF. The file may be scanned or image-based.")
     else:
         # Show helpful message when no file is uploaded
         st.info("👆 Please upload a medical report PDF file to get started. Any PDF filename is accepted!")
