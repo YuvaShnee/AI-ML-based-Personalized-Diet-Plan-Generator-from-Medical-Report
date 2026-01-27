@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json
 import PyPDF2
@@ -220,16 +219,50 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Extract text from PDF
+# Extract text from PDF - Updated to handle any filename
 def extract_text_from_pdf(pdf_file):
+    """
+    Extract text from PDF file with any filename.
+    
+    Args:
+        pdf_file: UploadedFile object from Streamlit file uploader
+        
+    Returns:
+        str: Extracted text from PDF or None if error occurs
+    """
     try:
+        # Display the filename being processed
+        filename = pdf_file.name
+        st.info(f"📄 Processing file: **{filename}**")
+        
+        # Reset file pointer to beginning
+        pdf_file.seek(0)
+        
+        # Read PDF
         pdf_reader = PyPDF2.PdfReader(pdf_file)
+        
+        # Get number of pages
+        num_pages = len(pdf_reader.pages)
+        st.info(f"📃 Found {num_pages} page(s) in the document")
+        
+        # Extract text from all pages
         text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text()
+        for page_num, page in enumerate(pdf_reader.pages, 1):
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+        
+        if not text.strip():
+            st.error("⚠️ No text could be extracted from the PDF. Please ensure the PDF contains readable text.")
+            return None
+            
         return text
+        
+    except PyPDF2.errors.PdfReadError as e:
+        st.error(f"❌ Error reading PDF: The file might be corrupted or password-protected. Error: {str(e)}")
+        return None
     except Exception as e:
-        st.error(f"Error reading PDF: {str(e)}")
+        st.error(f"❌ Unexpected error reading PDF '{pdf_file.name}': {str(e)}")
         return None
 
 # Extract health metrics using regex patterns
@@ -440,8 +473,12 @@ def analyze_medical_report(report_text):
     if health_metrics.get('blood_sugar', {}).get('status') == 'High':
         diagnoses.append("Elevated Blood Sugar / Pre-diabetes Risk")
     if health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0] != '120':
-        if int(health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0]) > 130:
-            diagnoses.append("Hypertension (High Blood Pressure)")
+        try:
+            bp_value = int(health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0])
+            if bp_value > 130:
+                diagnoses.append("Hypertension (High Blood Pressure)")
+        except:
+            pass
     if health_metrics.get('cholesterol', {}).get('status') == 'High':
         diagnoses.append("High Cholesterol")
     if health_metrics.get('bmi', {}).get('status') == 'High':
@@ -564,15 +601,20 @@ def main():
         """)
         st.markdown("---")
         st.info("💡 Your report should contain standard health metrics like BMI, cholesterol, blood sugar, etc.")
+        st.info("📁 **Any PDF filename is accepted!** The app will process files with any name.")
         
         st.markdown("---")
         st.warning("⚠️ **Disclaimer**: This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.")
     
-    # File upload
+    # File upload - Updated to be more explicit about accepting any filename
+    st.markdown("#### 📤 Upload Your Medical Report")
+    st.markdown("*Accepts PDF files with any filename (e.g., report.pdf, medical_test_2024.pdf, lab_results.pdf)*")
+    
     uploaded_file = st.file_uploader(
-        "📄 Upload Medical Report (PDF)", 
+        "Choose a PDF file", 
         type=['pdf'],
-        help="Upload a PDF file containing your medical test results"
+        help="Upload any PDF file containing your medical test results. All PDF filenames are accepted.",
+        accept_multiple_files=False
     )
     
     if uploaded_file:
@@ -580,7 +622,7 @@ def main():
             report_text = extract_text_from_pdf(uploaded_file)
         
         if report_text:
-            st.success("✅ Medical report uploaded successfully!")
+            st.success(f"✅ Successfully processed: **{uploaded_file.name}**")
             
             with st.expander("📄 View Extracted Text"):
                 st.text_area("Report Content", report_text[:1000] + "..." if len(report_text) > 1000 else report_text, height=200)
@@ -730,6 +772,9 @@ def main():
                     
                     st.markdown("---")
                     st.success("🎉 Your personalized diet plan is ready!")
+    else:
+        # Show helpful message when no file is uploaded
+        st.info("👆 Please upload a medical report PDF file to get started. Any PDF filename is accepted!")
 
 if __name__ == "__main__":
     main()
