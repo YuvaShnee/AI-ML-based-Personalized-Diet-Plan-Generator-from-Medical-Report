@@ -8,6 +8,9 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
+from pdf2image import convert_from_bytes
+import pytesseract
+from PIL import Image
 
 # Page configuration
 st.set_page_config(
@@ -219,11 +222,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Extract text from PDF - Updated to handle any filename and various PDF formats
+# Extract text from PDF with OCR support
 def extract_text_from_pdf(pdf_file):
     """
     Extract text from PDF file with any filename.
-    Handles both text-based and scanned (image-based) PDFs.
+    Handles both text-based and scanned (image-based) PDFs using OCR.
     
     Args:
         pdf_file: UploadedFile object from Streamlit file uploader
@@ -245,7 +248,7 @@ def extract_text_from_pdf(pdf_file):
         # Reset file pointer again
         pdf_file.seek(0)
         
-        # Try to read with PyPDF2
+        # Try to read with PyPDF2 first
         try:
             pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_bytes))
             
@@ -269,17 +272,33 @@ def extract_text_from_pdf(pdf_file):
                 st.success(f"✅ Successfully extracted text from **{filename}**")
                 return text
             else:
-                # No text extracted - might be a scanned PDF
+                # No text extracted - try OCR
                 st.warning("⚠️ No text could be extracted using standard method.")
-                st.info("🔍 This appears to be a scanned/image-based PDF.")
-                st.markdown("""
-                **Possible solutions:**
-                - Convert the PDF to a text-based format
-                - Use OCR software to extract text first
-                - Re-upload a text-based PDF version of your medical report
-                - Alternatively, you can manually enter the key metrics below
-                """)
-                return None
+                st.info("🔍 Attempting OCR (Optical Character Recognition) for scanned PDF...")
+                
+                try:
+                    # Convert PDF to images
+                    images = convert_from_bytes(pdf_bytes, dpi=300)
+                    st.info(f"📸 Converted PDF to {len(images)} image(s)")
+                    
+                    # Extract text from each image using OCR
+                    ocr_text = ""
+                    for i, image in enumerate(images, 1):
+                        st.info(f"🔤 Processing page {i}/{len(images)} with OCR...")
+                        page_text = pytesseract.image_to_string(image)
+                        ocr_text += page_text + "\n"
+                    
+                    if ocr_text.strip():
+                        st.success(f"✅ Successfully extracted text using OCR from **{filename}**")
+                        return ocr_text
+                    else:
+                        st.error("❌ OCR could not extract any text from the PDF")
+                        return None
+                        
+                except Exception as ocr_error:
+                    st.error(f"❌ OCR failed: {str(ocr_error)}")
+                    st.info("💡 Please ensure you have installed: poppler-utils and tesseract-ocr")
+                    return None
                 
         except PyPDF2.errors.PdfReadError as e:
             st.error(f"❌ Error reading PDF: The file might be corrupted or password-protected. Error: {str(e)}")
@@ -625,20 +644,21 @@ def main():
         4. **Download** your custom report
         """)
         st.markdown("---")
-        st.info("💡 Your report should contain standard health metrics like BMI, cholesterol, blood sugar, etc.")
-        st.info("📁 **Any PDF filename is accepted!** The app will process files with any name.")
+        st.info("💡 Works with both text-based and scanned PDFs!")
+        st.info("📁 **Any PDF filename is accepted!**")
+        st.success("✨ **NEW:** OCR support for scanned documents")
         
         st.markdown("---")
         st.warning("⚠️ **Disclaimer**: This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.")
     
-    # File upload - Updated to be more explicit about accepting any filename
+    # File upload
     st.markdown("#### 📤 Upload Your Medical Report")
-    st.markdown("*Accepts PDF files with any filename (e.g., report.pdf, medical_test_2024.pdf, lab_results.pdf)*")
+    st.markdown("*Accepts any PDF file - text-based or scanned (with OCR)*")
     
     uploaded_file = st.file_uploader(
         "Choose a PDF file", 
         type=['pdf'],
-        help="Upload any PDF file containing your medical test results. All PDF filenames are accepted.",
+        help="Upload any PDF file containing your medical test results. Supports scanned documents with OCR.",
         accept_multiple_files=False
     )
     
@@ -798,7 +818,7 @@ def main():
                     st.markdown("---")
                     st.success("🎉 Your personalized diet plan is ready!")
         else:
-            st.info("💡 Unable to extract text from the PDF. The file may be scanned or image-based.")
+            st.error("❌ Could not extract text from the PDF. Please try a different file.")
     else:
         # Show helpful message when no file is uploaded
         st.info("👆 Please upload a medical report PDF file to get started. Any PDF filename is accepted!")
