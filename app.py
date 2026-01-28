@@ -8,6 +8,9 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
+from pdf2image import convert_from_bytes
+import pytesseract
+from PIL import Image
 
 # Page configuration
 st.set_page_config(
@@ -219,43 +222,78 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Extract text from PDF - FIXED VERSION
+# Extract text from PDF with OCR support
 def extract_text_from_pdf(pdf_file):
     """
-    Extract text from PDF file with robust error handling.
-    Works with various PDF formats and filenames.
+    Extract text from PDF file with OCR support for image-based PDFs.
+    Works with both text-based and scanned/image-based PDFs.
     """
     try:
         # Reset file pointer to beginning
         pdf_file.seek(0)
         
-        # Create a BytesIO object to ensure compatibility
-        pdf_bytes = BytesIO(pdf_file.read())
+        # Read PDF bytes
+        pdf_bytes = pdf_file.read()
         
-        # Use pypdf (modern version) for better compatibility
-        pdf_reader = PdfReader(pdf_bytes)
+        # Try regular text extraction first
+        try:
+            pdf_reader = PdfReader(BytesIO(pdf_bytes))
+            text = ""
+            
+            for page_num, page in enumerate(pdf_reader.pages):
+                try:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+                except Exception as page_error:
+                    continue
+            
+            # If we got substantial text, return it
+            if text and len(text.strip()) > 50:
+                return text
+            
+        except Exception as e:
+            st.info("📄 Regular text extraction didn't work. Trying OCR...")
         
-        text = ""
-        # Extract text from all pages
-        for page_num, page in enumerate(pdf_reader.pages):
-            try:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-            except Exception as page_error:
-                st.warning(f"Could not extract text from page {page_num + 1}: {str(page_error)}")
-                continue
+        # If regular extraction failed or got minimal text, try OCR
+        st.info("🔍 Detecting image-based PDF. Using OCR to extract text...")
         
-        # Check if any text was extracted
-        if not text or text.strip() == "":
-            st.warning("⚠️ No text could be extracted from the PDF. The PDF might be image-based or encrypted.")
+        try:
+            # Convert PDF to images
+            images = convert_from_bytes(pdf_bytes, dpi=300)
+            
+            text = ""
+            total_pages = len(images)
+            
+            # Create a progress bar
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            for i, image in enumerate(images):
+                status_text.text(f"Processing page {i+1} of {total_pages}...")
+                progress_bar.progress((i + 1) / total_pages)
+                
+                # Use pytesseract for OCR
+                page_text = pytesseract.image_to_string(image, lang='eng')
+                text += f"\n--- Page {i+1} ---\n{page_text}\n"
+            
+            progress_bar.empty()
+            status_text.empty()
+            
+            if text and len(text.strip()) > 50:
+                st.success("✅ Text extracted successfully using OCR!")
+                return text
+            else:
+                st.warning("⚠️ OCR completed but minimal text was found.")
+                return None
+                
+        except Exception as ocr_error:
+            st.error(f"❌ OCR failed: {str(ocr_error)}")
+            st.info("💡 Make sure the PDF contains readable text or images.")
             return None
             
-        return text
-        
     except Exception as e:
         st.error(f"❌ Error reading PDF file: {str(e)}")
-        st.info("💡 Tip: Make sure the PDF is not corrupted, password-protected, or image-based without OCR.")
         return None
 
 # Extract health metrics using regex patterns
@@ -589,7 +627,7 @@ def main():
         4. **Download** your custom report
         """)
         st.markdown("---")
-        st.info("💡 Your report should contain standard health metrics like BMI, cholesterol, blood sugar, etc.")
+        st.info("💡 Works with both text-based and scanned PDFs using OCR technology!")
         
         st.markdown("---")
         st.warning("⚠️ **Disclaimer**: This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.")
@@ -598,7 +636,7 @@ def main():
     uploaded_file = st.file_uploader(
         "📄 Upload Medical Report (PDF)", 
         type=['pdf'],
-        help="Upload a PDF file containing your medical test results"
+        help="Upload a PDF file containing your medical test results (text-based or scanned)"
     )
     
     if uploaded_file:
