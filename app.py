@@ -1,7 +1,6 @@
-
 import streamlit as st
 import json
-import PyPDF2
+from pypdf import PdfReader
 import re
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
@@ -220,16 +219,43 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Extract text from PDF
+# Extract text from PDF - FIXED VERSION
 def extract_text_from_pdf(pdf_file):
+    """
+    Extract text from PDF file with robust error handling.
+    Works with various PDF formats and filenames.
+    """
     try:
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        # Reset file pointer to beginning
+        pdf_file.seek(0)
+        
+        # Create a BytesIO object to ensure compatibility
+        pdf_bytes = BytesIO(pdf_file.read())
+        
+        # Use pypdf (modern version) for better compatibility
+        pdf_reader = PdfReader(pdf_bytes)
+        
         text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text()
+        # Extract text from all pages
+        for page_num, page in enumerate(pdf_reader.pages):
+            try:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+            except Exception as page_error:
+                st.warning(f"Could not extract text from page {page_num + 1}: {str(page_error)}")
+                continue
+        
+        # Check if any text was extracted
+        if not text or text.strip() == "":
+            st.warning("⚠️ No text could be extracted from the PDF. The PDF might be image-based or encrypted.")
+            return None
+            
         return text
+        
     except Exception as e:
-        st.error(f"Error reading PDF: {str(e)}")
+        st.error(f"❌ Error reading PDF file: {str(e)}")
+        st.info("💡 Tip: Make sure the PDF is not corrupted, password-protected, or image-based without OCR.")
         return None
 
 # Extract health metrics using regex patterns
