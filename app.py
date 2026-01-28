@@ -8,9 +8,6 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
-from pdf2image import convert_from_bytes
-import pytesseract
-from PIL import Image
 
 # Page configuration
 st.set_page_config(
@@ -222,96 +219,72 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Extract text from PDF with OCR support
+# Extract text from PDF - Simple and reliable
 def extract_text_from_pdf(pdf_file):
     """
-    Extract text from PDF file with OCR support for image-based PDFs.
-    Works with both text-based and scanned/image-based PDFs.
+    Extract text from text-based PDF files.
+    Simple, fast, and reliable for PDFs with embedded text.
     """
     try:
         # Reset file pointer to beginning
         pdf_file.seek(0)
         
-        # Read PDF bytes
-        pdf_bytes = pdf_file.read()
+        # Read PDF bytes into BytesIO buffer
+        pdf_bytes = BytesIO(pdf_file.read())
         
-        # Try regular text extraction first
-        try:
-            pdf_reader = PdfReader(BytesIO(pdf_bytes))
-            text = ""
-            
-            for page_num, page in enumerate(pdf_reader.pages):
-                try:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text += page_text + "\n"
-                except Exception as page_error:
-                    continue
-            
-            # If we got substantial text, return it
-            if text and len(text.strip()) > 50:
-                return text
-            
-        except Exception as e:
-            st.info("📄 Regular text extraction didn't work. Trying OCR...")
+        # Create PDF reader
+        pdf_reader = PdfReader(pdf_bytes)
         
-        # If regular extraction failed or got minimal text, try OCR
-        st.info("🔍 Detecting image-based PDF. Using OCR to extract text...")
+        # Extract text from all pages
+        text = ""
+        total_pages = len(pdf_reader.pages)
         
-        try:
-            # Convert PDF to images
-            images = convert_from_bytes(pdf_bytes, dpi=300)
-            
-            text = ""
-            total_pages = len(images)
-            
-            # Create a progress bar
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            for i, image in enumerate(images):
-                status_text.text(f"Processing page {i+1} of {total_pages}...")
-                progress_bar.progress((i + 1) / total_pages)
+        for page_num in range(total_pages):
+            try:
+                page = pdf_reader.pages[page_num]
+                page_text = page.extract_text()
                 
-                # Use pytesseract for OCR
-                page_text = pytesseract.image_to_string(image, lang='eng')
-                text += f"\n--- Page {i+1} ---\n{page_text}\n"
-            
-            progress_bar.empty()
-            status_text.empty()
-            
-            if text and len(text.strip()) > 50:
-                st.success("✅ Text extracted successfully using OCR!")
-                return text
-            else:
-                st.warning("⚠️ OCR completed but minimal text was found.")
-                return None
-                
-        except Exception as ocr_error:
-            st.error(f"❌ OCR failed: {str(ocr_error)}")
-            st.info("💡 Make sure the PDF contains readable text or images.")
+                if page_text:
+                    text += page_text + "\n"
+                    
+            except Exception as page_error:
+                st.warning(f"⚠️ Could not read page {page_num + 1}: {str(page_error)}")
+                continue
+        
+        # Check if we extracted any meaningful text
+        if text and len(text.strip()) > 20:
+            return text
+        else:
+            st.error("❌ Could not extract text from PDF. The file might be:")
+            st.markdown("""
+            - Corrupted or damaged
+            - Password-protected
+            - A scanned image (requires OCR - see OCR version)
+            - Empty
+            """)
             return None
             
     except Exception as e:
-        st.error(f"❌ Error reading PDF file: {str(e)}")
+        st.error(f"❌ Error reading PDF: {str(e)}")
+        st.info("💡 Make sure the PDF file is valid and not corrupted.")
         return None
 
 # Extract health metrics using regex patterns
 def extract_health_metrics(text):
     metrics = {}
     
-    # Common patterns for health metrics
+    # Common patterns for health metrics - More flexible matching
     patterns = {
-        'bmi': r'BMI[:\s]+(\d+\.?\d*)',
-        'cholesterol': r'(?:Total\s+)?Cholesterol[:\s]+(\d+)',
-        'blood_sugar': r'(?:Blood\s+Sugar|Glucose|FBS|RBS)[:\s]+(\d+)',
-        'blood_pressure': r'(?:Blood\s+Pressure|BP)[:\s]+(\d+/\d+)',
-        'hemoglobin': r'(?:Hemoglobin|Hb|HGB)[:\s]+(\d+\.?\d*)',
-        'triglycerides': r'Triglycerides[:\s]+(\d+)',
-        'hdl': r'HDL[:\s]+(\d+)',
-        'ldl': r'LDL[:\s]+(\d+)',
-        'weight': r'Weight[:\s]+(\d+\.?\d*)',
-        'height': r'Height[:\s]+(\d+\.?\d*)',
+        'bmi': r'BMI[:\s]*(\d+\.?\d*)',
+        'cholesterol': r'(?:Total\s+)?Cholesterol[:\s]*(\d+)',
+        'blood_sugar': r'(?:Blood\s+Sugar|Glucose|FBS|RBS)[:\s]*(\d+)',
+        'blood_pressure': r'(?:Blood\s+Pressure|BP)[:\s]*(\d+/\d+)',
+        'hemoglobin': r'(?:Hemoglobin|Hb|HGB)[:\s]*(\d+\.?\d*)',
+        'triglycerides': r'Triglycerides[:\s]*(\d+)',
+        'hdl': r'HDL[:\s]*(\d+)',
+        'ldl': r'LDL[:\s]*(\d+)',
+        'weight': r'Weight[:\s]*(\d+\.?\d*)',
+        'height': r'Height[:\s]*(\d+\.?\d*)',
     }
     
     for key, pattern in patterns.items():
@@ -352,7 +325,7 @@ def get_health_status(metric, value):
 def generate_diet_plan(metrics, diagnoses):
     has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
     has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
-    has_high_cholesterol = metrics.get('cholesterol_status') == 'High'
+    has_high_cholesterol = any('cholesterol' in d.lower() for d in diagnoses)
     
     # Base meal plan
     meal_plan = {
@@ -387,12 +360,17 @@ def generate_diet_plan(metrics, diagnoses):
         meal_plan['lunch'].append("Low-sodium vegetable soup")
         meal_plan['dinner'].append("Herb-seasoned chicken (no salt)")
     
+    if has_high_cholesterol:
+        meal_plan['breakfast'].append("Steel-cut oats with flaxseed")
+        meal_plan['lunch'].append("Mediterranean chickpea salad")
+    
     return meal_plan
 
 # Generate nutrition guidelines
 def generate_nutrition_guidelines(diagnoses):
     has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
     has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
+    has_high_cholesterol = any('cholesterol' in d.lower() for d in diagnoses)
     
     base_guidelines = {
         'daily_calories': 2000,
@@ -429,6 +407,16 @@ def generate_nutrition_guidelines(diagnoses):
         base_guidelines['foods_to_avoid'].extend([
             "Canned soups and processed meats",
             "Pickles and salty snacks"
+        ])
+    
+    if has_high_cholesterol:
+        base_guidelines['foods_to_include'].extend([
+            "Fatty fish (salmon, mackerel)",
+            "Soluble fiber foods (oats, beans)"
+        ])
+        base_guidelines['foods_to_avoid'].extend([
+            "Red meat and full-fat dairy",
+            "Fried foods"
         ])
     
     return base_guidelines
@@ -488,10 +476,10 @@ def analyze_medical_report(report_text):
                 'unit': units[metric]
             }
     
-    # Extract patient info (basic extraction)
-    name_match = re.search(r'(?:Name|Patient)[:\s]+([A-Za-z\s]+)', report_text, re.IGNORECASE)
-    age_match = re.search(r'Age[:\s]+(\d+)', report_text, re.IGNORECASE)
-    gender_match = re.search(r'(?:Gender|Sex)[:\s]+(Male|Female)', report_text, re.IGNORECASE)
+    # Extract patient info
+    name_match = re.search(r'(?:Patient\s+Name|Name)[:\s]*([A-Za-z\s]+?)(?:\n|Age)', report_text, re.IGNORECASE)
+    age_match = re.search(r'Age[:\s]*(\d+)', report_text, re.IGNORECASE)
+    gender_match = re.search(r'(?:Gender|Sex)[:\s]*(Male|Female)', report_text, re.IGNORECASE)
     
     patient_info = {
         'name': name_match.group(1).strip() if name_match else "Patient",
@@ -501,13 +489,18 @@ def analyze_medical_report(report_text):
     
     # Determine diagnoses based on metrics
     diagnoses = []
+    
+    # Check for diagnoses mentioned in the report
+    if re.search(r'Hypertension', report_text, re.IGNORECASE):
+        diagnoses.append("Hypertension (High Blood Pressure)")
+    
     if health_metrics.get('blood_sugar', {}).get('status') == 'High':
-        diagnoses.append("Elevated Blood Sugar / Pre-diabetes Risk")
-    if health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0] != '120':
-        if int(health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0]) > 130:
-            diagnoses.append("Hypertension (High Blood Pressure)")
+        if 'Hypertension' not in ' '.join(diagnoses):
+            diagnoses.append("Elevated Blood Sugar / Pre-diabetes Risk")
+    
     if health_metrics.get('cholesterol', {}).get('status') == 'High':
         diagnoses.append("High Cholesterol")
+    
     if health_metrics.get('bmi', {}).get('status') == 'High':
         diagnoses.append("Overweight / Obesity")
     
@@ -577,13 +570,14 @@ def generate_pdf_report(data):
     story.append(Spacer(1, 0.2*inch))
     
     # Health Metrics
-    story.append(Paragraph("<b>Health Metrics</b>", styles['Heading2']))
-    for key, val in data['health_metrics'].items():
-        story.append(Paragraph(
-            f"{key.upper()}: {val['value']} {val['unit']} - {val['status']}", 
-            styles['Normal']
-        ))
-    story.append(Spacer(1, 0.2*inch))
+    if data['health_metrics']:
+        story.append(Paragraph("<b>Health Metrics</b>", styles['Heading2']))
+        for key, val in data['health_metrics'].items():
+            story.append(Paragraph(
+                f"{key.upper()}: {val['value']} {val['unit']} - {val['status']}", 
+                styles['Normal']
+            ))
+        story.append(Spacer(1, 0.2*inch))
     
     # Diagnoses
     story.append(Paragraph("<b>Diagnoses</b>", styles['Heading2']))
@@ -627,7 +621,7 @@ def main():
         4. **Download** your custom report
         """)
         st.markdown("---")
-        st.info("💡 Works with both text-based and scanned PDFs using OCR technology!")
+        st.info("💡 Works with text-based PDF files containing standard health metrics")
         
         st.markdown("---")
         st.warning("⚠️ **Disclaimer**: This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.")
@@ -636,7 +630,7 @@ def main():
     uploaded_file = st.file_uploader(
         "📄 Upload Medical Report (PDF)", 
         type=['pdf'],
-        help="Upload a PDF file containing your medical test results (text-based or scanned)"
+        help="Upload a PDF file containing your medical test results"
     )
     
     if uploaded_file:
