@@ -1,6 +1,7 @@
+
 import streamlit as st
 import json
-from pypdf import PdfReader
+import PyPDF2
 import re
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
@@ -219,161 +220,34 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Diagnostic function to check PDF file
-def diagnose_pdf(pdf_file):
-    """Diagnose PDF file to understand its structure"""
-    try:
-        pdf_file.seek(0)
-        pdf_bytes = pdf_file.read()
-        
-        # Check file signature
-        if not pdf_bytes.startswith(b'%PDF'):
-            return False, "Not a valid PDF file (missing PDF signature)"
-        
-        # Check file size
-        file_size = len(pdf_bytes)
-        
-        # Try to read with pypdf
-        pdf_file.seek(0)
-        try:
-            reader = PdfReader(BytesIO(pdf_bytes))
-            num_pages = len(reader.pages)
-            
-            # Try to get metadata
-            metadata = {}
-            if reader.metadata:
-                metadata = {
-                    'title': reader.metadata.get('/Title', 'N/A'),
-                    'author': reader.metadata.get('/Author', 'N/A'),
-                    'creator': reader.metadata.get('/Creator', 'N/A'),
-                    'producer': reader.metadata.get('/Producer', 'N/A')
-                }
-            
-            # Check if encrypted
-            is_encrypted = reader.is_encrypted
-            
-            return True, {
-                'valid': True,
-                'size': file_size,
-                'pages': num_pages,
-                'encrypted': is_encrypted,
-                'metadata': metadata
-            }
-            
-        except Exception as read_error:
-            return False, f"PDF read error: {str(read_error)}"
-            
-    except Exception as e:
-        return False, f"File error: {str(e)}"
-
-# Extract text from PDF with detailed diagnostics
+# Extract text from PDF
 def extract_text_from_pdf(pdf_file):
-    """
-    Extract text from text-based PDF files with detailed diagnostics.
-    """
     try:
-        # First, diagnose the PDF
-        st.info("🔍 Diagnosing PDF file...")
-        is_valid, diagnosis = diagnose_pdf(pdf_file)
-        
-        if not is_valid:
-            st.error(f"❌ PDF Diagnosis Failed: {diagnosis}")
-            return None
-        
-        # Show diagnostic info
-        with st.expander("📊 PDF File Information"):
-            st.write(f"**File Size:** {diagnosis['size']:,} bytes ({diagnosis['size']/1024:.2f} KB)")
-            st.write(f"**Number of Pages:** {diagnosis['pages']}")
-            st.write(f"**Encrypted:** {'Yes ❌' if diagnosis['encrypted'] else 'No ✅'}")
-            if diagnosis['metadata']:
-                st.write("**Metadata:**")
-                for key, value in diagnosis['metadata'].items():
-                    st.write(f"  - {key}: {value}")
-        
-        if diagnosis['encrypted']:
-            st.error("❌ This PDF is password-protected. Please provide an unlocked version.")
-            return None
-        
-        # Reset and read PDF
-        pdf_file.seek(0)
-        pdf_bytes = BytesIO(pdf_file.read())
-        
-        # Create PDF reader with error handling
-        try:
-            pdf_reader = PdfReader(pdf_bytes)
-        except Exception as reader_error:
-            st.error(f"❌ Failed to create PDF reader: {str(reader_error)}")
-            return None
-        
-        # Extract text from all pages
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
         text = ""
-        total_pages = len(pdf_reader.pages)
-        
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        for page_num in range(total_pages):
-            try:
-                status_text.text(f"Reading page {page_num + 1} of {total_pages}...")
-                progress_bar.progress((page_num + 1) / total_pages)
-                
-                page = pdf_reader.pages[page_num]
-                page_text = page.extract_text()
-                
-                if page_text and page_text.strip():
-                    text += page_text + "\n"
-                    st.success(f"✅ Page {page_num + 1}: Extracted {len(page_text)} characters")
-                else:
-                    st.warning(f"⚠️ Page {page_num + 1}: No text found (might be image-based)")
-                    
-            except Exception as page_error:
-                st.error(f"❌ Error on page {page_num + 1}: {str(page_error)}")
-                continue
-        
-        progress_bar.empty()
-        status_text.empty()
-        
-        # Check if we extracted any meaningful text
-        if text and len(text.strip()) > 20:
-            st.success(f"✅ Successfully extracted {len(text)} characters from PDF")
-            return text
-        else:
-            st.error("❌ Could not extract meaningful text from PDF.")
-            st.info("""
-            **Possible reasons:**
-            - The PDF contains only images (needs OCR)
-            - The PDF is corrupted
-            - The PDF uses an unsupported encoding
-            
-            **Try:**
-            - Re-export the PDF from the original source
-            - Use the original filename
-            - Check if the file opens normally in a PDF reader
-            """)
-            return None
-            
+        for page in pdf_reader.pages:
+            text += page.extract_text()
+        return text
     except Exception as e:
-        st.error(f"❌ Unexpected error: {str(e)}")
-        import traceback
-        st.code(traceback.format_exc())
+        st.error(f"Error reading PDF: {str(e)}")
         return None
 
 # Extract health metrics using regex patterns
 def extract_health_metrics(text):
     metrics = {}
     
-    # Common patterns for health metrics - More flexible matching
+    # Common patterns for health metrics
     patterns = {
-        'bmi': r'BMI[:\s]*(\d+\.?\d*)',
-        'cholesterol': r'(?:Total\s+)?Cholesterol[:\s]*(\d+)',
-        'blood_sugar': r'(?:Blood\s+Sugar|Glucose|FBS|RBS)[:\s]*(\d+)',
-        'blood_pressure': r'(?:Blood\s+Pressure|BP)[:\s]*(\d+/\d+)',
-        'hemoglobin': r'(?:Hemoglobin|Hb|HGB)[:\s]*(\d+\.?\d*)',
-        'triglycerides': r'Triglycerides[:\s]*(\d+)',
-        'hdl': r'HDL[:\s]*(\d+)',
-        'ldl': r'LDL[:\s]*(\d+)',
-        'weight': r'Weight[:\s]*(\d+\.?\d*)',
-        'height': r'Height[:\s]*(\d+\.?\d*)',
+        'bmi': r'BMI[:\s]+(\d+\.?\d*)',
+        'cholesterol': r'(?:Total\s+)?Cholesterol[:\s]+(\d+)',
+        'blood_sugar': r'(?:Blood\s+Sugar|Glucose|FBS|RBS)[:\s]+(\d+)',
+        'blood_pressure': r'(?:Blood\s+Pressure|BP)[:\s]+(\d+/\d+)',
+        'hemoglobin': r'(?:Hemoglobin|Hb|HGB)[:\s]+(\d+\.?\d*)',
+        'triglycerides': r'Triglycerides[:\s]+(\d+)',
+        'hdl': r'HDL[:\s]+(\d+)',
+        'ldl': r'LDL[:\s]+(\d+)',
+        'weight': r'Weight[:\s]+(\d+\.?\d*)',
+        'height': r'Height[:\s]+(\d+\.?\d*)',
     }
     
     for key, pattern in patterns.items():
@@ -414,7 +288,7 @@ def get_health_status(metric, value):
 def generate_diet_plan(metrics, diagnoses):
     has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
     has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
-    has_high_cholesterol = any('cholesterol' in d.lower() for d in diagnoses)
+    has_high_cholesterol = metrics.get('cholesterol_status') == 'High'
     
     # Base meal plan
     meal_plan = {
@@ -449,17 +323,12 @@ def generate_diet_plan(metrics, diagnoses):
         meal_plan['lunch'].append("Low-sodium vegetable soup")
         meal_plan['dinner'].append("Herb-seasoned chicken (no salt)")
     
-    if has_high_cholesterol:
-        meal_plan['breakfast'].append("Steel-cut oats with flaxseed")
-        meal_plan['lunch'].append("Mediterranean chickpea salad")
-    
     return meal_plan
 
 # Generate nutrition guidelines
 def generate_nutrition_guidelines(diagnoses):
     has_diabetes = any('diabetes' in d.lower() for d in diagnoses)
     has_hypertension = any('hypertension' in d.lower() or 'pressure' in d.lower() for d in diagnoses)
-    has_high_cholesterol = any('cholesterol' in d.lower() for d in diagnoses)
     
     base_guidelines = {
         'daily_calories': 2000,
@@ -496,16 +365,6 @@ def generate_nutrition_guidelines(diagnoses):
         base_guidelines['foods_to_avoid'].extend([
             "Canned soups and processed meats",
             "Pickles and salty snacks"
-        ])
-    
-    if has_high_cholesterol:
-        base_guidelines['foods_to_include'].extend([
-            "Fatty fish (salmon, mackerel)",
-            "Soluble fiber foods (oats, beans)"
-        ])
-        base_guidelines['foods_to_avoid'].extend([
-            "Red meat and full-fat dairy",
-            "Fried foods"
         ])
     
     return base_guidelines
@@ -565,10 +424,10 @@ def analyze_medical_report(report_text):
                 'unit': units[metric]
             }
     
-    # Extract patient info
-    name_match = re.search(r'(?:Patient\s+Name|Name)[:\s]*([A-Za-z\s]+?)(?:\n|Age)', report_text, re.IGNORECASE)
-    age_match = re.search(r'Age[:\s]*(\d+)', report_text, re.IGNORECASE)
-    gender_match = re.search(r'(?:Gender|Sex)[:\s]*(Male|Female)', report_text, re.IGNORECASE)
+    # Extract patient info (basic extraction)
+    name_match = re.search(r'(?:Name|Patient)[:\s]+([A-Za-z\s]+)', report_text, re.IGNORECASE)
+    age_match = re.search(r'Age[:\s]+(\d+)', report_text, re.IGNORECASE)
+    gender_match = re.search(r'(?:Gender|Sex)[:\s]+(Male|Female)', report_text, re.IGNORECASE)
     
     patient_info = {
         'name': name_match.group(1).strip() if name_match else "Patient",
@@ -578,18 +437,13 @@ def analyze_medical_report(report_text):
     
     # Determine diagnoses based on metrics
     diagnoses = []
-    
-    # Check for diagnoses mentioned in the report
-    if re.search(r'Hypertension', report_text, re.IGNORECASE):
-        diagnoses.append("Hypertension (High Blood Pressure)")
-    
     if health_metrics.get('blood_sugar', {}).get('status') == 'High':
-        if 'Hypertension' not in ' '.join(diagnoses):
-            diagnoses.append("Elevated Blood Sugar / Pre-diabetes Risk")
-    
+        diagnoses.append("Elevated Blood Sugar / Pre-diabetes Risk")
+    if health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0] != '120':
+        if int(health_metrics.get('blood_pressure', {}).get('value', '120/80').split('/')[0]) > 130:
+            diagnoses.append("Hypertension (High Blood Pressure)")
     if health_metrics.get('cholesterol', {}).get('status') == 'High':
         diagnoses.append("High Cholesterol")
-    
     if health_metrics.get('bmi', {}).get('status') == 'High':
         diagnoses.append("Overweight / Obesity")
     
@@ -659,14 +513,13 @@ def generate_pdf_report(data):
     story.append(Spacer(1, 0.2*inch))
     
     # Health Metrics
-    if data['health_metrics']:
-        story.append(Paragraph("<b>Health Metrics</b>", styles['Heading2']))
-        for key, val in data['health_metrics'].items():
-            story.append(Paragraph(
-                f"{key.upper()}: {val['value']} {val['unit']} - {val['status']}", 
-                styles['Normal']
-            ))
-        story.append(Spacer(1, 0.2*inch))
+    story.append(Paragraph("<b>Health Metrics</b>", styles['Heading2']))
+    for key, val in data['health_metrics'].items():
+        story.append(Paragraph(
+            f"{key.upper()}: {val['value']} {val['unit']} - {val['status']}", 
+            styles['Normal']
+        ))
+    story.append(Spacer(1, 0.2*inch))
     
     # Diagnoses
     story.append(Paragraph("<b>Diagnoses</b>", styles['Heading2']))
@@ -696,7 +549,7 @@ def generate_pdf_report(data):
 
 # Main app
 def main():
-    st.title("🏥 Medical Diet Plan Generator (Diagnostic Version)")
+    st.title("🏥 Medical Diet Plan Generator")
     st.markdown("### Upload your medical report to get personalized diet recommendations")
     st.markdown("---")
     
@@ -705,13 +558,12 @@ def main():
         st.header("📋 How It Works")
         st.markdown("""
         1. **Upload** your medical report (PDF)
-        2. **Diagnose** file issues
-        3. **Extract** health metrics
-        4. **Get** personalized diet plan
-        5. **Download** your custom report
+        2. **Extract** health metrics automatically
+        3. **Get** personalized diet plan
+        4. **Download** your custom report
         """)
         st.markdown("---")
-        st.info("💡 This diagnostic version shows detailed information about your PDF file")
+        st.info("💡 Your report should contain standard health metrics like BMI, cholesterol, blood sugar, etc.")
         
         st.markdown("---")
         st.warning("⚠️ **Disclaimer**: This tool provides general dietary guidance. Always consult healthcare professionals for medical advice.")
@@ -724,9 +576,6 @@ def main():
     )
     
     if uploaded_file:
-        st.info(f"**Uploaded File:** {uploaded_file.name}")
-        st.info(f"**File Size:** {uploaded_file.size:,} bytes ({uploaded_file.size/1024:.2f} KB)")
-        
         with st.spinner("🔍 Reading your medical report..."):
             report_text = extract_text_from_pdf(uploaded_file)
         
