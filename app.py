@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json
 import PyPDF2
@@ -424,13 +423,32 @@ def analyze_medical_report(report_text):
                 'unit': units[metric]
             }
     
-    # Extract patient info (basic extraction)
-    name_match = re.search(r'(?:Name|Patient)[:\s]+([A-Za-z\s]+)', report_text, re.IGNORECASE)
+    # Extract patient info (improved extraction)
+    # Try multiple patterns for name extraction
+    name = "Patient"
+    name_patterns = [
+        r'(?:Patient\s+Name|Name|Patient)[:\s]+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*?)(?:\s+Age|\s+DOB|\s+Date|\s+Gender|\s+Sex|\s+\d|\n|$)',
+        r'Name[:\s]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
+        r'Patient[:\s]*:?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
+        r'Patient\s+Name[:\s]*([A-Z][a-zA-Z\s]+?)(?=\s+Age|\s+DOB|\s+Date|\n)',
+    ]
+    
+    for pattern in name_patterns:
+        name_match = re.search(pattern, report_text)
+        if name_match:
+            extracted_name = name_match.group(1).strip()
+            # Clean up the name - remove trailing numbers, dates, or extra whitespace
+            extracted_name = re.sub(r'\s+\d+.*$', '', extracted_name).strip()
+            # Remove common words that might be captured
+            if extracted_name and len(extracted_name) > 2 and extracted_name.lower() not in ['age', 'date', 'gender', 'sex', 'male', 'female', 'report', 'test']:
+                name = extracted_name
+                break
+    
     age_match = re.search(r'Age[:\s]+(\d+)', report_text, re.IGNORECASE)
     gender_match = re.search(r'(?:Gender|Sex)[:\s]+(Male|Female)', report_text, re.IGNORECASE)
     
     patient_info = {
-        'name': name_match.group(1).strip() if name_match else "Patient",
+        'name': name,
         'age': int(age_match.group(1)) if age_match else 0,
         'gender': gender_match.group(1) if gender_match else "Unknown"
     }
